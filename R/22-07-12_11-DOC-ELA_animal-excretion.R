@@ -11,7 +11,7 @@
   library(gratia) # to draw GAM
   
   # upload datasets ----
-  er <- read.csv('22 07 11_11 DOC lakes Mastersheet.csv',
+  er <- read.csv('data/2022-07-11_11-DOC-lakes_Mastersheet.csv',
                  stringsAsFactors = F, na.strings = c("", "NA", "."), 
                  strip.white = TRUE, sep = ",")
   
