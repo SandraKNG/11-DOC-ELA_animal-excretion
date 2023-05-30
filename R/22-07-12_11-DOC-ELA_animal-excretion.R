@@ -22,9 +22,9 @@
   # clean data, rename and add variables ----
   
   excr <- er %>%
-    rename(ID = ï..ID,
-           Mass = Dry.mass..g.,
+    rename(Mass = Dry.mass..g.,
            AmHisDOC = Ambient.historical.DOC..mg.C.L.,
+           AmDOC = DOC..mg.C.L.,
            P.excretion.rate = P.excretion.rate..ug.h.ind.,
            N.excretion.rate = N.excretion.rate..ug.h.ind.) %>% 
     # filter(Comments != 'dead during experiment') %>%
@@ -150,7 +150,7 @@
               Log10.massnorm.N.excr.sp = log10(massnorm.N.excr.sp),
               Log10.massnorm.P.excr.sp = log10(massnorm.P.excr.sp),
               Log10.massnorm.NP.excr.sp = log10(massnorm.NP.excr.sp),
-              AmHisDOC = mean(AmHisDOC))
+              AmDOC = mean(AmDOC))
   
   excr.smry <- excr %>% filter(Species.code != 'CTL1',
                                Species.code != 'CTL2') %>% 
@@ -212,7 +212,7 @@
   # N excretion vs. Hist DOC relative to species
   Nexcrsp.p <- ggplot(excr.sp %>%  filter(Species.code != 'CTL1',
                                           Species.code != 'CTL2'), 
-                      aes(x = AmHisDOC, y = massnorm.N.excr.sp)) +
+                      aes(x = AmDOC, y = massnorm.N.excr.sp)) +
     geom_point(aes(color = Species.code), 
                size = 4) +
     theme_classic(base_size = 20) +
@@ -227,7 +227,7 @@
   # P excretion vs. Hist DOC
   Pexcrsp.p <- ggplot(excr.sp %>%  filter(Species.code != 'CTL1',
                                           Species.code != 'CTL2'), 
-                      aes(x = AmHisDOC, y = massnorm.P.excr.sp)) +
+                      aes(x = AmDOC, y = massnorm.P.excr.sp)) +
     geom_point(aes(color = Species.code), 
                size = 4) +
     theme_classic(base_size = 20) +
@@ -259,8 +259,8 @@
   Nexcrav.p
   
   # P excretion vs. Hist DOC
-  Pexcrav.p <- ggplot(excr.smry, 
-                       aes(x = AmHisDOC, y = massnorm.P.excr.sp)) +
+  Pexcrav.p <- ggplot(excr, 
+                       aes(x = AmDOC, y = massnorm.P.excr)) +
     geom_point(size = 4) +
     theme_classic(base_size = 20) +
     labs(x = 'DOC (mg C/L)',

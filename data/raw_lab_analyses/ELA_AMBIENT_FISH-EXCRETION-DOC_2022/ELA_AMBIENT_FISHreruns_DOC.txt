@@ -1,0 +1,36 @@
+[Header]	
+System	TOC-Vwp	
+File Ver.	2.10	
+User		
+Date of Creation	14/04/2023 09:06:01	
+Comments		
+
+[System]	
+Detector	Wet Chemical	
+Catalyst	High Sensitivity	
+ASI Tray	40 mL Vials	
+
+[Data]	
+Type	Anal.	Sample Name	Sample ID	TOC	TC	IC	POC	NPOC	TN	Unit	Vial	Date / Time	
+Unknown	NPOC	BLANK	Untitled					0.1129		mg/L	1	14/04/2023 09:41:15	
+Unknown	NPOC	STD10	Untitled					9.919		mg/L	2	14/04/2023 09:56:31	
+Unknown	NPOC	BLANK	Untitled					0.06039		mg/L	3	14/04/2023 10:15:06	
+Unknown	NPOC	L239	Untitled					7.029		mg/L	4	14/04/2023 10:30:31	
+Unknown	NPOC	L470	Untitled					10.91		mg/L	5	14/04/2023 10:46:10	
+Unknown	NPOC	L375	Untitled					5.691		mg/L	6	14/04/2023 11:01:36	
+Unknown	NPOC	L222	Untitled					10.04		mg/L	7	14/04/2023 11:17:27	
+Unknown	NPOC	L377	Untitled					5.260		mg/L	8	14/04/2023 11:32:51	
+Unknown	NPOC	1008	Untitled					2.018		mg/L	9	14/04/2023 11:52:48	
+Unknown	NPOC	1011	Untitled					1.340		mg/L	10	14/04/2023 12:07:46	
+Unknown	NPOC	910	Untitled					2.395		mg/L	11	14/04/2023 12:23:11	
+Unknown	NPOC	CTL3	Untitled					2.420		mg/L	12	14/04/2023 12:38:06	
+Unknown	NPOC	115	Untitled					0.8875		mg/L	13	14/04/2023 12:53:00	
+Unknown	NPOC	916	Untitled					7.792		mg/L	14	14/04/2023 13:08:05	
+Unknown	NPOC	922	Untitled					1.244		mg/L	15	14/04/2023 13:22:54	
+Unknown	NPOC	904	Untitled					5.672		mg/L	16	14/04/2023 13:38:03	
+Unknown	NPOC	1003	Untitled					5.703		mg/L	17	14/04/2023 13:54:14	
+Unknown	NPOC	1014	Untitled					2.467		mg/L	18	14/04/2023 14:14:34	
+Unknown	NPOC	LOONCALLTOP	Untitled					10.57		mg/L	19	14/04/2023 14:34:32	
+Unknown	NPOC	LOONCALLBTM	Untitled					5.573		mg/L	20	14/04/2023 14:54:22	
+Unknown	NPOC	KASSHBOGBTM	Untitled					8.893		mg/L	21	14/04/2023 15:15:00	
+Unknown	NPOC	BLANK	Untitled					0.1282		mg/L	22	14/04/2023 15:33:23	
