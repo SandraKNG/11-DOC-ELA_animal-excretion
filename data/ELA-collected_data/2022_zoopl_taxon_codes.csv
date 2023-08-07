@@ -1,0 +1,114 @@
+﻿group,taxon_code,taxa_name,graph_name
+cyclopoid,acvera,Acanthocyclops vernalis c6,A. vernalis c6
+cyclopoid,acverc,Acanthocyclops vernalis c4-5,A. vernalis c4-5
+rotifer,anfis,Anuraeopsis fissa ,A. fissa 
+rotifer,apher,Asplanchna herricki,A. herricki
+rotifer,appri,Asplanchna priodonta,A. priodonta
+rotifer,apsps,Asplanchna spp.,Asplanchna spp.
+rotifer,aseca,Ascomorpha ecaudis,A. ecaudis
+rotifer,asova,Ascomorpha ovalis,A. ovalis
+rotifer,assal,Ascomorpha saltans,A. saltans
+rotifer,assps,Ascomorpha sp,Ascomorpha sp.
+cladocera,bolng,Bosmina longirostris,B. longirostris
+cladocera,bos_tot,Bosmina spp.,Bosmina spp.
+rotifer,brqua,Brachionus quadridentatus,B. quadridentatus
+rotifer,brsps,Brachionus sp.,Brachionus sp.
+calanoid,cal13,unidentified Calanoid copepodid c1-3,Calanoid copepodids c1-3
+calanoid,cal45,unidentified Calanoid copepodid c4-5,Calanoid copepodids c4-5
+calanoid,calcop,unidentified Calanoid copepodid c1-5,Calanoid copepodids c1-5
+calanoid,calcop_c_all,sum of all calanoid copepodid stages (C1-5),Calanoid copepodids c1-5
+calanoid,calnc,Calanoid nauplii,Calanoid nauplii
+cladocera,cesps,Ceriodaphnia spp.,Ceriodaphnia spp.
+cladocera,cerio,Ceriodaphnia spp.,Ceriodaphnia spp.
+cladocera,chsph,Chydorus cf. sphaericus,C. cf. sphaericus
+rotifer,clsps,Collotheca spp,Collotheca spp
+rotifer,cnsps,Conochiloides spp,Conochiloides spp
+rotifer,cosps,Conochilus sp.,Conochilus sp.
+rotifer,couni,Conochilus unicornis,C. unicornis
+rotifer,cpsps,Cephalodella sp.,Cephalodella sp.
+rotifer,cusps,Colurella sp.,Colurella sp.
+cyclopoid,cybica,Diacyclops bicuspidatus thomasi c6,D. thomasi c6
+cyclopoid,cybicc,Diacyclops bicuspidatus thomasi c4-5,D. thomasi c4-5
+cyclopoid,cyc13,unidentified Cyclopoid copepodid c1-3,Cyclopoid copepodids c1-3
+cyclopoid,cyc45,unidentified Cyclopoid copepodid c4-5,Cyclopoid copepodids c4-5
+cyclopoid,cyccop,unidentified Cyclopoid copepodid c1-5,Cyclopoid copepodids c1-5
+cyclopoid,cycnc,Cyclopoid nauplii,Cyclopoid nauplii
+cyclopoid,cycop_c_all,sum of all cyclopoid copepodid stages (C1-5),Cyclopoid copepodid c1-5
+cyclopoid,cyvar,Microcyclops varicans rubellus c4-6,M. varicans c4-6
+cladocera,daamb,Daphnia ambigua,D. ambigua
+cladocera,dapar,Daphnia parvula,D. parvula
+cladocera,daret,Daphnia retrocurva,D. retrocurva
+cladocera,dasps,Daphnia sp.,Daphnia sp.
+cladocera,dgal_grp,"Daphnia galeata group (includes D. mendota, D. dubia, D. laevis, D. dentifera, D. longiremis)",D. galeata 
+cladocera,dibir,Diaphanosoma birgei,D. birgei
+calanoid,dpasha,Diaptomus ashlandi c6,D. ashlandi c6
+calanoid,dpashc,Diaptomus ashlandi c4-5,D. ashlandi c4-5
+calanoid,dplepa,Diaptomus leptopus c6,D. leptopus c6
+calanoid,dplepc,Diaptomus leptopus c4-5,D. leptopus c4-5
+cladocera,dplx_grp,"Daphnia pulex group (includes D. pulex, D. catawba, D. schoedleri, D. pulicaria)",D. pulicaria
+calanoid,dpmina,Diaptomus minutus c6,D. minutus c6
+calanoid,dpminc,Diaptomus minutus c4-5,D. minutus c4-5
+calanoid,dporga,Diaptomus oregonensis c6,D. oregonensis c6
+calanoid,dporgc,Diaptomus oregonensis c4-5,D. oregonensis c4-5
+calanoid,dpsisa,Diaptomus sicilis c6,D. sicilis c6
+calanoid,dpsisc,Diaptomus sicilis c4-5,D. sicilis c4-5
+rotifer,ecsps,Euchlanis sp.,Euchlanis sp.
+rotifer,ehsps,Euchlanis sp.,Euchlanis sp.
+calanoid,eplaca,Epischura lacustris c6,E. lacustris c6
+calanoid,eplacc,Epischura lacustris c4-5,E. lacustris c4-5
+cladocera,eub_sp,Eubosmina spp.,Eubosmina spp.
+rotifer,fisps,Filinia spp.,Filinia spp.
+rotifer,glrot,unidentified globular rotifers,globular rotifers
+rotifer,gshyp,Gastropus hyptopus,G. hyptopus
+rotifer,gssps,Gastropus spp,Gastropus spp.
+cladocera,hogla,Holopedium glacialis,H. glacialis
+rotifer,hxsps,Hexarthra sp.,Hexarthra sp.
+insects,kasps,Chaoborus spp.,Chaoborus spp.
+rotifer,klbos,Kellicottia bostoniensis,K. bostoniensis
+rotifer,kllon,Kellicottia longspina,K. longspina
+rotifer,krcoh,Keratella cochlearis,K. cochlearis
+rotifer,krhem,Keratella hiemalis,K. hiemalis
+rotifer,krsps,Keratella spp.,Keratella spp.
+rotifer,lesps,Lecane sp.,Lecane sp.
+calanoid,limac,Limnocalanus macrurus c4-6,L. macrurus c4-6
+cladocera,litt_clad,littoral Cladocera,littoral Cladocera
+cyclopoid,litt_cyc,littoral cyclopoids,littoral cyclopoids
+rotifer,lpsps,Lepadella sp,Lepadella sp
+cladocera,ltkin,Leptodora kindtii,L. kindtii
+rotifer,malnf,Macrochaetus lonfipes,M. lonfipes
+rotifer,masps,Macrochaetus spp,Macrochaetus spp.
+cyclopoid,mceda,Mesocyclops edax c6,M. edax c6
+cyclopoid,mcedc,Mesocyclops edax c4-5,M. edax c4-5
+rotifer,mmsps,Monommata sp,Monommata sp.
+rotifer,mosps,Monostyla sp,Monostyla sp.
+mysis,mysid,Mysis diluviana,M. diluviana
+rotifer,nosps,Notommata sp,Notommata sp.
+rotifer,ntsps,Notholca sp.,Notholca sp.
+cyclopoid,ocmoda,Orthocyclops modestus c6,O. modestus c6
+cyclopoid,ocmodc,Orthocyclops modestus c4-5,O. modestus c4-5
+rotifer,plsps,Ploesma spp,Ploesma spp.
+cladocera,pmped,Polyphemus pediculus,P. pediculus
+rotifer,pmsps,Pompholyx sp,Pompholyx sp.
+rotifer,podol,Polyarthra dolichoptera,P. dolichoptera
+rotifer,pomaj,Polyarthra major,P. major
+rotifer,porem,Polyarthra remata,P. remata
+rotifer,posps,Polyarthra spp,Polyarthra spp.
+rotifer,povul,Polyarthra vulgaris,P. vulgaris
+rotifer,ptias,Platias sp.,Platias sp.
+rotifer,pxsps,Pompholyx sp.,Pompholyx sp.
+rotifer,rotar,Rotaria sp,Rotaria sp.
+rotifer,rotsp,,unidentified rotifers
+calanoid,secal,Senecella calanoides c4-6,S. calanoides c4-6
+cladocera,sicry,Sida crystallina,S. crystallina
+rotifer,syobl,Synchaeta oblonga,S. oblonga
+rotifer,sysps,Synchaeta sp,Synchaeta sp.
+cyclopoid,tcexta,Tropocyclops extensus c6,T. extensus c6
+cyclopoid,tcextc,Tropocyclops extensus c4-5,T. extensus c4-5
+rotifer,tesps,Testudinella sp,Testudinella sp.
+rotifer,tisps,Trichotria sp,Trichotria sp.
+rotifer,titer,Trichotria tetractis,T. tetractis
+rotifer,trcyl,Trichocerca cyclindrica,T. cyclindrica
+rotifer,trmul,Trichocerca multicrinis,T. multicrinis
+rotifer,trrou,Trichocera rousseleti,T. rousseleti
+rotifer,trsim,Trichocerca similis,T. similis
+rotifer,trsps,Trichocerca sp,Trichocerca sp.

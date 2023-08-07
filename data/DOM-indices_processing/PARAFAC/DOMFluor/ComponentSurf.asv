@@ -1,0 +1,36 @@
+function ComponentSurf(data,f)
+
+%The ComponentSurf function creates contour plots of each component.
+%A new figure window is made for each component.
+%
+%data: soure of data
+%f: number of components in model
+%
+%Example:
+%ComponentSurf(AnalysisData,5)
+
+%Copyright (C) 2008- Colin A. Stedmon
+%Department of Marine Ecology, National Environmental Research Institute,
+%Aarhus University, Frederiksborgvej 399, Roskilde, Denmark.
+%e-mail: cst@dmu.dk, Tel: +45 46301805
+
+
+eval(['Model=','data.Model',int2str(f)]);
+
+M =nmodel(Model);   
+E=data.X-M;
+[A,B,C]=fac2let(Model);
+
+Comp=[];
+for i=(1:f),
+    Comp=reshape((krb(C(:,i),B(:,i))'),[1 data.nEm data.nEx]); 
+    Comp=flucut(Comp,data.Em,data.Ex,[0 NaN],[NaN NaN]); 
+    figure;
+    surfc(data.Ex,data.Em,(squeeze(Comp(1,:,:)))), colorbar, axis tight,    
+    title(['Component ' num2str(i)]),
+    shading interp
+    view(-20,56)
+    xlabel('Ex. (nm)')
+    ylabel('Em. (nm)')
+end
+

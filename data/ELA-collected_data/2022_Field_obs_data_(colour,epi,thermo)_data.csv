@@ -1,0 +1,76 @@
+study_name,sample_num,location,sublocation,station,year,date,start_time,water_colour,epilimnion_depth,plan_therm_depth,method_sample_code,method_sample_desc,gear_type_code,gear_type_desc,comments,update_date,account,version
+LTER,2022060608-01,224,LA,CB,2022,2022-03-31,10:00,,,,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022040302-10,239,LA,CB,2022,2022-04-04,,,,,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Microplastics,2022040304-09,378,LA,CB,2022,2022-04-04,,,,,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022040502-09,373,LA,CB,2022,2022-04-05,,,,,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022052502-10,239,LA,CB,2022,2022-05-25,,yellow orange,2.50,4.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022053003-10,224,LA,CB,2022,2022-05-30,,yellow green,1.50,2.25,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Microplastics,2022053102-10,378,LA,CB,2022,2022-05-31,,brown yellow,1.25,1.38,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022053103-04,114,LA,CB,2022,2022-05-31,,yellow orange,1.75,1.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Quaternary ammonia compounds,2022053104-05,375,LA,CB,2022,2022-05-31,,brown yellow,1.00,1.88,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022060102-10,373,LA,CB,2022,2022-06-01,,green yellow,3.25,3.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022060703-04,239,LA,CB,2022,2022-06-07,,Yellow Orange,3.00,4.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022060802-08,442,LA,CB,2022,2022-06-08,,Orange Yellow,1.50,3.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022061303-05,224,LA,CB,2022,2022-06-13,,Blue Green,2.50,2.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Diversion,2022061304-03,626,LA,CB,2022,2022-06-13,,yellow green,2.50,3.13,,,,,Thermal epi depth comment: Determination of epilimnion depth less accurate since YSI only shows one decimal place for temperature.,2023-04-25,chay,1
+Microplastics,2022061402-10,378,LA,CB,2022,2022-06-14,,dark yellow,2.25,2.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022061403-04,114,LA,CB,2022,2022-06-14,,brown yellow,3.00,3.38,,,,,Thermal epi depth comment: Determination of epilimnion depth less accurate since YSI only shows one decimal place for temperature.,2023-04-25,chay,1
+LTER,2022061503-10,373,LA,CB,2022,2022-06-15,,yellow-green,3.00,3.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022062103-10,239,LA,CB,2022,2022-06-21,,yellow,,3.38,,,RBR2,RBR #2 XRX620 Serial No 18033,"Profile? comment: PAR and profile samples collected June 21. Temp oxygen collected June 22.| Epi depth comment: originally had ""brown"" but was set to null.",2023-04-25,chay,1
+LTER,2022062202-04,442,LA,CB,2022,2022-06-22,,green yellow,2.00,2.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022062703-10,224,LA,CB,2022,2022-06-27,,yellow-green,4.00,4.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Microplastics,2022062802-05,378,LA,CB,2022,2022-06-28,,Brown yellow,3.00,3.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022062803-04,114,LA,CB,2022,2022-06-28,,brown yellow,4.25,,,,,,Thermocline was noted as N/A in field,2023-04-25,chay,1
+Quaternary ammonia compounds,2022062804-05,375,LA,CB,2022,2022-06-28,,green yellow,3.00,3.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022062902-05,373,LA,CB,2022,2022-06-29,,yellow green,4.25,4.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022071903-04,239,LA,CB,2022,2022-07-19,,yellow brown,3.00,3.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022072002-08,442,LA,CB,2022,2022-07-20,,brown yellow,2.25,5.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022072502-05,224,LA,CB,2022,2022-07-25,,blue green,4.25,5.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Diversion,2022072503-04,626,LA,CB,2022,2022-07-25,,Yellow-Green,3.75,4.63,,,,,Thermal epi depth comment: Determination of epilimnion depth less accurate since YSI only shows one decimal place for temperature.,2023-04-25,chay,1
+Microplastics,2022072602-10,378,LA,CB,2022,2022-07-26,,yellow brown,3.00,3.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022072603-04,114,LA,CB,2022,2022-07-26,,brown yellow,4.50,,,,,,,2023-04-25,chay,1
+LTER,2022072703-10,373,LA,CB,2022,2022-07-27,,yellow green,4.50,5.13,,,RBR2,RBR #2 XRX620 Serial No 18033,Thermal epi depth comment: Determination of epilimnion depth less accurate since YSI only shows one decimal place for temperature.,2023-04-25,chay,1
+LTER,2022080302-05,442,LA,CB,2022,2022-08-03,,brown yellow,3.00,4.13,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022080303-10,239,LA,CB,2022,2022-08-03,,brown yellow,3.75,4.13,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022080802-10,224,LA,CB,2022,2022-08-08,,light green,4.50,5.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Microplastics,2022080902-06,378,LA,CB,2022,2022-08-09,,dark yellow,3.00,3.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022080903-04,114,LA,CB,2022,2022-08-09,,yellow green,4.50,,,,,,,2023-04-25,chay,1
+Quaternary ammonia compounds,2022080904-05,375,LA,CB,2022,2022-08-09,,brown yellow,3.75,4.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022081002-05,373,LA,CB,2022,2022-08-10,,blue green,5.00,6.13,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022081603-04,239,LA,CB,2022,2022-08-16,,brown yellow,3.00,4.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022081702-08,442,LA,CB,2022,2022-08-17,,green yellow,3.00,3.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022082202-05,224,LA,CB,2022,2022-08-22,,blue green,4.75,5.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Diversion,2022082203-04,626,LA,CB,2022,2022-08-22,,green yellow,4.00,5.13,,,RBR1,RBR #1 XRX620 Serial No 18018,"RBR# comment: finally have RBR 1 back!-KS
+",2023-04-25,chay,1
+Microplastics,2022082302-10,378,LA,CB,2022,2022-08-23,,brown yellow,2.75,4.50,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022082303-04,114,LA,CB,2022,2022-08-23,,green yellow,2.00,2.13,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022082403-10,373,LA,CB,2022,2022-08-24,,yellow green,4.50,5.88,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022083004-10,239,LA,CB,2022,2022-08-30,11:05,brown orange,4.00,5.13,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022083102-05,442,LA,CB,2022,2022-08-31,10:35,orange yellow,3.25,3.88,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Microplastics,2022090605-06,378,LA,CB,2022,2022-09-06,08:31,brown yellow,3.50,4.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022090604-10,224,LA,CB,2022,2022-09-06,11:05,green blue,5.25,6.13,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Quaternary ammonia compounds,2022090606-05,375,LA,CB,2022,2022-09-06,13:27,green yellow,4.00,4.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022090607-04,114,LA,CB,2022,2022-09-06,14:19,green yellow,4.00,,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022090702-05,373,LA,CB,2022,2022-09-07,08:15,green yellow,5.75,6.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022091302-04,239,LA,CB,2022,2022-09-13,09:46,brown orange,4.75,5.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022091402-08,442,LA,CB,2022,2022-09-14,09:10,orange yellow,4.00,4.88,,,RBR1,RBR #1 XRX620 Serial No 18018,Profile? comment: 17m sample taken at 16.5m,2023-04-25,chay,1
+LTER,2022091904-10,373,LA,CB,2022,2022-09-19,09:49,yellow green,7.00,7.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Diversion,2022091906-03,626,LA,CB,2022,2022-09-19,14:29,yellow green,5.50,6.38,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022091905-05,224,LA,CB,2022,2022-09-19,,yellow brown,6.75,7.13,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Microplastics,2022092003-10,378,LA,CB,2022,2022-09-20,08:36,yellow,4.75,4.88,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022092004-04,114,LA,CB,2022,2022-09-20,09:40,yellow green,4.50,,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022092703-10,239,LA,CB,2022,2022-09-27,11:20,,6.00,6.38,,,RBR2,RBR #2 XRX620 Serial No 18033,"Cloud cover comment: cloud cover wasn't recorded, used data from 304 sampled at the same time-KS",2023-04-25,chay,1
+LTER,2022092802-05,442,LA,CB,2022,2022-09-28,09:30,orange yellow,5.25,5.63,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022100305-10,224,LA,CB,2022,2022-10-03,11:00,blue green,7.75,8.13,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+Microplastics,2022100403-06,378,LA,CB,2022,2022-10-04,09:58,green yellow,5.25,6.38,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022100402-04,114,LA,CB,2022,2022-10-04,10:07,light green,4.50,,,,RBR1,RBR #1 XRX620 Serial No 18018,Thermocline was noted as N/A in field,2023-04-25,chay,1
+Quaternary ammonia compounds,2022100405-05,375,LA,CB,2022,2022-10-04,14:09,yellow green,5.75,6.63,,,RBR2,RBR #2 XRX620 Serial No 18033,,2023-04-25,chay,1
+LTER,2022100502-05,373,LA,CB,2022,2022-10-05,08:56,mint green,8.00,8.38,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022102406-04,114,LA,CB,2022,2022-10-24,10:40,white green,4.60,,,,RBR2,RBR #2 XRX620 Serial No 18033,Thermocline was noted as N/A in field,2023-04-25,chay,1
+LTER,2022102502-08,442,LA,CB,2022,2022-10-25,09:14,green yellow,9.00,8.50,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Diversion,2022102505-04,626,LA,CB,2022,2022-10-25,,yellow green,11.75,12.13,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+Microplastics,2022103106-10,378,LA,CB,2022,2022-10-31,09:00,brown yellow,10.50,10.63,,,RBR1,RBR #1 XRX620 Serial No 18018,,2023-04-25,chay,1
+LTER,2022103105-10,224,LA,CB,2022,2022-10-31,10:59,na,14.00,14.88,,,RBR2,RBR #2 XRX620 Serial No 18033,"Secchi depth comment: secchi not recorded|Water colour comment: secchi not recorded| Secchi depth comment: originally had ""na"" but was set to null.",2023-04-25,chay,1
+Quaternary ammonia compounds,2022103107-05,375,LA,CB,2022,2022-10-31,14:35,green yellow,25.35,,,,RBR1,RBR #1 XRX620 Serial No 18018,Thermocline was noted as N/A in field,2023-04-25,chay,1
+LTER,2022110102-10,373,LA,CB,2022,2022-11-01,09:58,blue green,20.00,,,,RBR2,RBR #2 XRX620 Serial No 18033,Thermocline was noted as N/A in field,2023-04-25,chay,1
+LTER,2022110103-10,239,LA,CB,2022,2022-11-01,10:35,orange yellow,31.25,,,,RBR1,RBR #1 XRX620 Serial No 18018,Wind direction comment: numbers were crossed out???|Wind speed (lower) comment: numbers were crossed out???|Wind speed (upper) comment: numbers were crossed out???|Thermocline was noted as N/A in field,2023-04-25,chay,1
