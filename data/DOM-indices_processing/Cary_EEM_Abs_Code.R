@@ -8,12 +8,12 @@
 #Column 4 = csv file name for corresonding blank absorbance
 
 #AbsData should be altered so that column 1 = wavelength range
-#all other columns are absorbane values for blanks and samples
+#all other columns are absorbance values for blanks and samples
 #Column names must match those entered in the ChangeLog
 #Please note, do not use numbers for column names, R does not like this
 
-AbsData <- as.data.frame(data.matrix(read.csv("AbsData_fish.csv")))
-ChangeLog <- read.csv("ChangeLog_fish.csv", colClasses = "character")
+AbsData <- as.data.frame(data.matrix(read.csv("AbsData_lakes.csv")))
+ChangeLog <- read.csv("ChangeLog_lakes.csv", colClasses = "character")
 InstCorrect<-read.csv("EEMinstrumentCorrectionMatrix.csv", header = TRUE, row.names = 1)
 
 
@@ -206,6 +206,6 @@ dev.off()
 }
 rm(j,CutBase,CutRegion,EEM.cut,semRU,semRU1nm,SR,PeakA,PeakB,PeakC,PeakD,PeakE,PeakM,PeakN,PeakP,PeakT,HIX, HIX.ohno,FI,A254,A280,A350,A440,BA,Em.eem,Ex.eem)
 
-write.table(output,file="output_fish.csv",row.names=FALSE,sep=",")
+write.table(output,file="output_lakes.csv",row.names=FALSE,sep=",")
 
 rm(list=ls())
