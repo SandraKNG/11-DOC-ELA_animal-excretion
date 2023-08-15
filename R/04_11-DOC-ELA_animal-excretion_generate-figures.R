@@ -4,6 +4,8 @@
   
   ################################ FINAL FIGURES #################################
   # load libraries ----
+  library(RColorBrewer)
+  library(MetBrewer) # Met brewer color palette
   library(ggdist) # for stat_halfeye
   library(ggpubr) # for ggarrange function that allows to put all graphs on 1 page
   

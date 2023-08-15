@@ -7,6 +7,7 @@
   # load libraries ----
   library(ggdist) # for stat_halfeye
   library(ggpubr) # for ggarrange function that allows to put all graphs on 1 page
+  library(vegan) # for NMDS
   
   # labels
   Trophic.labels <- c('Invert/piscivore', 'Invertivore', 'Omnivore')
@@ -278,42 +279,50 @@
          width = 7, height = 14, 
          units = 'in', dpi = 600)
   
+  # DOM excretion only ----
+  ggplot(excr.DOM, aes(x = type, y = massnorm.excr)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(alpha = .3, width = .25) +
+    theme_light()
+  
+  excr.var <- excr.var %>% mutate(across(where(is.numeric), 
+                                         ~ if_else(. < 0, 0, .)))
+  t.test(excr.var$massnorm.SR.excr, mu = 0, alternative = c("greater"))
+  
   # ..DOM excretion vs ambient ----
-  excr.nmds <- excr %>% select(c('Site.name', 'Species.code',
-                                 'AmSUVA', 'AmSR', 'AmBA', 'AmFI', 'AmHIX', 'AmDOC',
-                                 'SUVA.excretion', 'SR.excretion', 'BA.excretion',
-                                 'FI.excretion', 'HIX.excretion'))
+  # function to rename some DOM characteristics
+  rename_DOM <- function(df) {
+    df <- df %>% 
+      rename(
+      SUVA254 = AmSUVA,
+      βα = AmBA,
+      SR = AmSR,
+      FI = AmFI,
+      HIX = AmHIX,
+      DOC = AmDOC,
+      C1 = AmC1,
+      C2 = AmC2,
+      C3 = AmC3,
+      C4 = AmC4,
+      C5 = AmC5,
+      C7 = AmC7,
+    )
+    return(df)
+  }
   
-  excr.pcal <- excr %>% select(c('Site.name', 'Species.code',
-                                 'AmSUVA', 'AmSR', 'AmBA', 'AmFI', 'AmHIX', 'AmDOC',
-                                 'SUVA.excretion', 'SR.excretion', 'BA.excretion',
-                                 'FI.excretion', 'HIX.excretion'))
-  
-  excr.pcal <- excr.pcal %>% rename(SUVA254 = AmSUVA,
-                                    βα = AmBA,
-                                    SR = AmSR,
-                                    FI = AmFI,
-                                    HIX = AmHIX,
-                                    DOC = AmDOC)
-  
-  excr.pca <- excr.pcal %>% group_by(Site.name) %>%
-    summarise(SUVA254 = mean(SUVA254),
-              βα = mean(βα),
-              SR = mean(SR),
-              FI = mean(FI),
-              HIX = mean(HIX),
-              DOC = mean(DOC))
-  # excr.nmds <- excr.nmds %>% filter(!is.na(SUVA.excretion)) %>% 
-  #   rename(SUVA254 = AmSUVA,
-  #          βα = AmBA,
-  #          SR = AmSR,
-  #          FI = AmFI,
-  #          HIX = AmHIX,
-  #          DOC = AmDOC)
-  
-  excr.nmdsm <- as.matrix(excr.nmds)
-  
-  pca <- princomp(excr.pca[, 2:7], cor = TRUE, scores = TRUE)
+  # PCA ----
+  # prepare PCA dataset
+  excr.pca <- excr %>% group_by(Site.name) %>%
+    summarise(across(c(
+      starts_with('Am'),-AmC6,-starts_with(c(
+        'AmA', 'AmP', 'AmS2', 'Ambi', 'AmS3', 'AmHis', 'AmR'
+      ))
+    ),
+    \(x) mean(x, na.rm = TRUE))) %>% 
+    rename_DOM()
+  # do PCA
+  # perhaps should use %?
+  pca <- princomp(excr.pca[, 3:13], cor = TRUE, scores = TRUE)
   biplot(pca)
   # Extract PC1 scores
   pca.PC1 <- pca$scores[,1]
@@ -321,10 +330,10 @@
   # plot PCA1
   library(ggbiplot) # to plot PCA results, only load it when need it for plotting
   PCA.p <- ggbiplot(pca, obs.scale = 1, var.scale = 1) +
-    labs(x = 'PC1 (70.4%)',
-         y = 'PC2 (19.6%)') +
+    # labs(x = 'PC1 (70.4%)',
+    #      y = 'PC2 (19.6%)') +
     # xlim(-4,4.5) + ylim(-4.5,5) +
-    theme_grey(base_size = 13) +
+    theme_bw(base_size = 13) +
     theme(panel.grid = element_blank())
   
   PCA.p
@@ -335,11 +344,81 @@
   
   detach("package:ggbiplot")
   
-  nmds <- metaMDS(excr.nmds[, 3:13], distance = 'bray')
-  plot(nmds)
+  # NMDS ----
+  # prepare NMDS dataset
+  excr.amb <- excr.pca %>% 
+    rename(ID = Site.name) %>% 
+    filter(ID %in% c('L222', 'L224', 'L239')) %>% 
+    dplyr::mutate(Site.name = c('L222', 'L224', 'L239'),
+                  Species.code = c('L222', 'L224', 'L239'))
+  excr.nmds <- excr %>% 
+    #group_by(Site.name, Species.code) %>%
+    select(c(
+      ID, Site.name, Species.code,
+      ends_with('excretion.rate'),
+      -starts_with(c('N.e', 'P.e'))
+      # starts_with('Am'),
+      # -AmC6,
+      # -starts_with(
+      #   c('AmA', 'AmP', 'AmS2', 'Ambi', 'N.e',
+      #     'P.e', 'AmS3', 'AmHis', 'AmR')
+      )
+    ) %>% 
+  dplyr::filter(
+    !between(ID, 935, 946),
+    !ID %in% c(1008, 1012, 1013, 115, 901, 904, 907, 911, 
+               907, 927, 928, 929, 930)
+  ) %>% 
+    mutate(across(where(is.numeric),
+                  ~ if_else(. < 0, 0, .)),
+           ID = as.character(ID)) %>% 
+    rename_with(~ sub(".excretion.rate", "", .), .cols = where(is.numeric)) %>% 
+    rename(
+      DOC = C,
+      βα = BA,
+      SUVA254 = SUVA
+    ) %>% 
+    dplyr::filter(
+      !is.na(DOC)) %>% 
+    bind_rows(excr.amb)
+    # summarise(across(everything(), mean, na.rm = TRUE)) %>%
+    # rename_DOM() %>%
+    # dplyr::filter(!is.na(C.excretion.rate)) %>% 
+    # pivot_longer(
+    #   cols = C.excretion.rate:C7.excretion.rate,
+    #   #names_pattern = '(*.)excretion.rate',
+    #   names_to = 'measurement',
+    #   values_to = 'value'
+    # ) %>%
+    # pivot_wider(
+    #   id_cols = c('Site.name', 'Species.code'),
+    #   names_from = ID,
+    #   values_from = value)
   
-  # extract NMDS scores (x and y coordinates)
-  data.scores = as.data.frame(scores(nmds))
-  data.scores = cbind(excr.nmds %>% filter(!is.na(SUVA.excretion)) %>% 
-                        select(Site.name, Species.code))
-  data.scores <- mutate(Site.name = excr.nmds$Site.name)
+  # transform NMDS dataset to a matrix
+  excr.nmds.m <- excr.nmds %>% 
+    select(-c(ID, Species.code, Site.name)) %>% 
+    as.matrix() 
+  
+  # do NMDS
+  set.seed(1)
+  nmds <- metaMDS(excr.nmds.m, distance = 'bray', k = 2, trymax = 100)
+  stressplot(nmds)
+  
+  # First create a data frame of the scores from the individual sites.
+  # This data frame will contain x and y values for where sites are located.
+  nmds.scores <- scores(nmds)$sites %>% 
+    as.tibble(rownames = 'sample') %>% 
+    dplyr::mutate(
+      ID = excr.nmds$ID,
+      Site.name = excr.nmds$Site.name,
+      Species.code = excr.nmds$Species.code
+    )
+  
+  # NMDS plot
+  ggplot(nmds.scores, aes(x = NMDS1, y = NMDS2)) +
+    geom_point(aes(colour = Species.code), size = 4) +
+    scale_color_brewer(palette = 'Set1') +
+    theme_bw()
+
+  
