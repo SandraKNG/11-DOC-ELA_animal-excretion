@@ -9,7 +9,20 @@
   library(vegan) # for NMDS
   library(car) # for Anova function
   
-  # do GAM ----
+  # PCA ----
+  excr.pca <- excr.pca %>% select(-c(C1:C7))
+  # do PCA
+  pca <- princomp(excr.pca[, 3:11], cor = TRUE, scores = TRUE)
+  biplot(pca)
+  # check loadings
+  pca$loadings
+  # Extract PC1 scores
+  pca.PC1 <- pca$scores[,1]
+  # add it to current datasets
+  excr.pca <- excr.pca %>% mutate(PC1 = pca.PC1)
+  excr <- left_join(excr, excr.pca, by = 'Site.name')
+  
+  # GAM ----
   # without trophic position and with population averages
   gamNDOC <- gam(massnorm.N.excr.sp ~ s(AmDOC,
                                         k = 7, m = 2, bs = 'tp'),
@@ -58,7 +71,7 @@
   appraise(gamPDOC.tp, method = 'simulate')
   draw(gamPDOC.tp)
   
-  # do LM ----
+  # LM ----
   lmN <- lm(massnorm.N.excr.sp ~ AmDOC, data = excr.sp)
   summary(lmN)
   Anova(lmN)
@@ -67,7 +80,7 @@
   summary(lmP)
   Anova(lmP)
   
-  # do ANOVA
+  # ANOVA ----
   aov.C <- aov(log10(massnorm.C.excr) ~ DOC.level, 
                data = excr %>% filter(!is.na(DOC.level),
                                       C.excretion.rate > 0))
@@ -82,3 +95,25 @@
                 data = excr %>% filter(!is.na(DOC.level),
                                        C.excretion.rate > 0))
   Anova(aov.CP)
+  
+  # NMDS ----
+  # transform NMDS dataset to a matrix
+  excr.nmds.m <- excr.nmds %>% 
+    select(-c(ID, Species.code, Site.name)) %>% 
+    as.matrix() 
+  
+  # do NMDS
+  set.seed(1)
+  nmds <- metaMDS(excr.nmds.m, distance = 'bray', k = 2, trymax = 100)
+  stressplot(nmds)
+  
+  # First create a data frame of the scores from the individual sites.
+  # This data frame will contain x and y values for where sites are located.
+  nmds.scores <- scores(nmds)$sites %>% 
+    as_tibble(rownames = 'sample') %>% 
+    dplyr::mutate(
+      ID = excr.nmds$ID,
+      Site.name = excr.nmds$Site.name,
+      Species.code = excr.nmds$Species.code
+    )
+  
