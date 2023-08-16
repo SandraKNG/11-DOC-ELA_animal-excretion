@@ -196,8 +196,12 @@
     mutate(
       DOC.level = factor(ifelse(Site.name == 'L224', 'low', 
                                 ifelse(Site.name == 'L239', 'med',
+<<<<<<< HEAD
                                        ifelse(Site.name == 'L222', 'high', NA)))),
       DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
+=======
+                                       ifelse(Site.name == 'L222', 'high', NA))))
+>>>>>>> 0d52ee11e7f3981543f9d12a40436e85bb018719
     ) %>% 
     pivot_longer(
       massnorm.SUVA.excr:massnorm.C7.excr,
@@ -279,7 +283,11 @@
     dplyr::filter(
       !is.na(DOC)) %>% 
     bind_rows(excr.amb) %>% 
+<<<<<<< HEAD
     select(-c(C1.p:C_microbial.p))
+=======
+    select(C1.p:C_microbial.p)
+>>>>>>> 0d52ee11e7f3981543f9d12a40436e85bb018719
 
   # ..summary statistics ----
   excr.ss <- excr %>% 
