@@ -2,12 +2,12 @@
   # This code was created by S. Klemet-N'Guessan in 2022 and 2023
   # R version 4.3.0
   
-  # load libraries and read datasets ----
+  # Load libraries and read datasets ----
   
   library(tidyverse)
   library(datawizard) # to do summary statistics
   
-  # upload datasets ----
+  # Upload datasets ----
   er <- read_csv('data/2022-07-11_11-DOC-lakes_Mastersheet.csv', 
                  na = c("NA", ""))
   
@@ -15,7 +15,7 @@
   str(er)
   head(er)
   
-  # clean data, rename and add variables ----
+  # Clean data, rename and add variables ----
   unique(er$Comments)
   excr <- er %>%
     rename(
@@ -36,11 +36,16 @@
       !Species.code %in% c('CTL1', 'CTL2', 'CTL3', 'CTL4'),
       !Comments %in% c('dead during experiment', 
                       'water reddish when at filtering stage',
-                      "put net from anesthetic bin in bag"))
+                      "put net from anesthetic bin in bag")) %>% 
+    mutate(
+      DOC.level = factor(ifelse(Site.name == 'L224', 'low', 
+                                ifelse(Site.name == 'L239', 'med',
+                                       ifelse(Site.name == 'L222', 'high', NA))))
+    )
 
-  # look at N/P excretion vs. mass ----
-  # ..Fathead minnows only because coeffs are ----
-  # too high for N excr (>1) + too low for P excr (<0.3)
+  # Look at N/P excretion vs. mass ----
+  # ...Fathead minnows only  ----
+  # because coeffs are too high for N excr (>1) + too low for P excr (<0.3)
   # N excretion
   # ggplot(excr %>%  filter(Species.code == 'FM',
   #                         Log10.N.excretion.rate > 0.5),
@@ -65,7 +70,7 @@
   #                   filter(Species.code == 'FM'))
   # modelP.FM$coefficients["Log10.mass"]
   
-  # ..calculate b coeff of variation for all excretion rates + all species ----
+  # ...calculate b coeff of variation for all excretion rates + all species ----
   # to normalize excretion rates
   # create datasets for nutrient and DOM excretion rates separately
   # so that remove specific fish that showed abnormal DOM residuals
@@ -162,7 +167,7 @@
   # add newly created columns to excr dataset
   excr <- left_join(excr, excr.var)
   
-  # create datasets for data analysis ----
+  # Create datasets for data analysis ----
   # function to rename some DOM characteristics
   rename_DOM <- function(df) {
     df <- df %>% 
@@ -176,7 +181,7 @@
   # ..make excr dataset with one entry for each excretion average ----
   # ..N + P excretion species average ----
   excr.sp <- excr %>% 
-    group_by(Site.name, Species.code, Trophic.position, AmDOC) %>% 
+    group_by(Site.name, Species.code, Trophic.position, AmDOC, DOC.level) %>% 
     summarise(
       across(
         ends_with('excr'), 
@@ -184,25 +189,16 @@
         .names = "{.col}.sp"
       ),
       n = n()
-    ) %>% 
-    mutate(
-      DOC.level = factor(ifelse(AmDOC == 3.462, 'low', 
-                                ifelse(AmDOC == 7.156, 'med',
-                                       ifelse(AmDOC == 10.04, 'high', NA))))
-    )
+      )
   # ..pivot dataset for DOM excretion only ----
   excr.DOM <- excr.var %>% 
     select(ID, Site.name, massnorm.SUVA.excr:massnorm.C7.excr) %>% 
     mutate(
       DOC.level = factor(ifelse(Site.name == 'L224', 'low', 
                                 ifelse(Site.name == 'L239', 'med',
-<<<<<<< HEAD
                                        ifelse(Site.name == 'L222', 'high', NA)))),
       DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
-=======
-                                       ifelse(Site.name == 'L222', 'high', NA))))
->>>>>>> 0d52ee11e7f3981543f9d12a40436e85bb018719
-    ) %>% 
+      ) %>% 
     pivot_longer(
       massnorm.SUVA.excr:massnorm.C7.excr,
       names_to = 'type',
@@ -223,29 +219,27 @@
         'AmA', 'AmP', 'AmS2', 'Ambi', 'AmS3', 'AmHis', 'AmR'
       ))
     ),
-    \(x) mean(x, na.rm = TRUE))) %>% 
-    rename_DOM()
+    \(x) mean(x, na.rm = TRUE))) 
   
   # transform PARAFAC components into percentages
   Calc_AmCtot <- function(df) {
-    result <- rowSums(df[, c("C1", "C2", "C3", "C4", "C5", "C7")])
+    result <- rowSums(df[, c("AmC1", "AmC2", "AmC3", "AmC4", "AmC5", "AmC7")])
     return(result)
   }
+  
   for (site in unique(excr.pca$Site.name)) {
-    site_subset <- excr.pca %>% filter(Site.name == site)
     AmCtot <- Calc_AmCtot(excr.pca)
+    
+    for (col in c("AmC1", "AmC2", "AmC3", "AmC4", "AmC5", "AmC7")) {
+      col_name <- paste0(col, "per")
+      excr.pca <- excr.pca %>%
+        mutate(!!col_name := !!sym(col) / AmCtot * 100)
+    }
     excr.pca <- excr.pca %>%
-      mutate(
-        C1.p = C1 / AmCtot * 100,
-        C2.p = C2 / AmCtot * 100,
-        C3.p = C3 / AmCtot * 100,
-        C4.p = C4 / AmCtot * 100,
-        C5.p = C5 / AmCtot * 100,
-        C7.p = C7 / AmCtot * 100,
-        C_humic.p = sum(C1:C3) / AmCtot * 100,
-        C_microbial.p = C5 / AmCtot * 100
-      )
+      mutate(C_humicper = AmC1per + AmC2per + AmC3per,
+             C_microbialper = AmC5per)
   }
+  cat("AmCtot:", AmCtot, "\n")
   
   # ..prepare NMDS dataset ----
   excr.amb <- excr.pca %>% 
@@ -283,11 +277,7 @@
     dplyr::filter(
       !is.na(DOC)) %>% 
     bind_rows(excr.amb) %>% 
-<<<<<<< HEAD
     select(-c(C1.p:C_microbial.p))
-=======
-    select(C1.p:C_microbial.p)
->>>>>>> 0d52ee11e7f3981543f9d12a40436e85bb018719
 
   # ..summary statistics ----
   excr.ss <- excr %>% 

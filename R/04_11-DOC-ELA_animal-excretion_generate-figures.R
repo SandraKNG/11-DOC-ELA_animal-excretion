@@ -11,84 +11,69 @@
   library(factoextra) # for pca
   
   # Set up prediction data ----
-  # without trophic position and with population averages
-  gamNDOC.pred <- with(excr, 
-                        expand.grid(AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                  length = 100), 
-                                              rep(median(AmDOC), 100))))
+  # Prediction function for trophic position
+  # make the prediction, add this and a column of standard errors to the 
+  # prediction data.frame.
   
-  gamPDOC.pred <- with(excr, 
-                       expand.grid(AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                 length = 100), 
-                                             rep(median(AmDOC), 100))))
+  pred_df <- function(olddf, x) {
+    if (any(x == 'excr$AmDOC')) {
+      newdf <- with(olddf, 
+                    expand.grid(x = c(seq(min(x), max(x),
+                                          length = 100), 
+                                      rep(median(x), 100)),
+                                Trophic.position = levels(Trophic.position)))
+    } else {
+      newdf <- with(olddf, 
+                    expand.grid(x = c(seq(min(x), max(x),
+                                          length = 100), 
+                                      rep(median(x), 100)),
+                                Trophic.position = levels(Trophic.position)))
+    }
+    function(mod) {newdf <- cbind(newdf, 
+                                  predict(mod,newdf,
+                                          se.fit = TRUE,
+                                          type = "link"))
+    ilink <- inv_link(mod)
+    newdf <- newdf %>% mutate(response = ilink(fit),
+                              upper = ilink(fit + (1.96 * se.fit)),
+                              lower = ilink(fit - (1.96 * se.fit)))
+    return(newdf)
+    }
+  }
   
-  gamNPDOC.pred <- with(excr, 
-                       expand.grid(AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                 length = 100), 
-                                             rep(median(AmDOC), 100))))
+  # Prediction function for vertebrate classification with  pred on log scale 
+  pred_log_df <- function(olddf, x) {
+    if (any(x == 'excr$AmDOC')) {
+      newdf <- with(olddf, 
+                    expand.grid(x = c(seq(min(x), max(x),
+                                          length = 100), 
+                                      rep(median(x), 100)),
+                                group = levels(group)))
+    } else {
+      newdf <- with(olddf, 
+                    expand.grid(x = c(seq(min(x), max(x),
+                                          length = 100), 
+                                      rep(median(x), 100)),
+                                group = levels(group)))
+    }
+    
+    function(mod) {newdf <- cbind(newdf, 
+                                  predict(mod,newdf,
+                                          se.fit = TRUE,
+                                          type = "response"))
+    newdf <- newdf %>% mutate(upper = fit + (1.96 * se.fit),
+                              lower = fit - (1.96 * se.fit))
+    return(newdf)
+    }
+  }
   
-  # with trophic position
-  gamNDOCtp.pred <- with(excr, 
-                       expand.grid(AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                 length = 100), 
-                                             rep(median(AmDOC), 100)),
-                                   Trophic.position = levels(Trophic.position)))
+  # Storing prediction functions with different inputs
+  pred.DOC <- pred_df(excr, excr$AmDOC)
+  pred.DOM <- pred_df(excr, excr$PC1)
   
-  gamPDOCtp.pred <- with(excr, 
-                       expand.grid(AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                 length = 100), 
-                                             rep(median(AmDOC), 100)),
-                                   Trophic.position = levels(Trophic.position)))
+  # *Prediction models ----
+  gamNDOC.pred <- pred.DOC(gamNDOC)
   
-  # Model with DOC and DOM separately ----
-  # without trophic position and with population averages
-  gamNDOC.pred <- cbind(gamNDOC.pred,
-                         predict(gamNDOC, 
-                                 gamNDOC.pred, 
-                                 se.fit = TRUE, 
-                                 type = "response"))
-  
-  gamNDOC.pred <- gamNDOC.pred %>% mutate(upper = fit + (1.96 * se.fit),
-                                            lower = fit - (1.96 * se.fit))
-  
-  gamPDOC.pred <- cbind(gamPDOC.pred,
-                        predict(gamPDOC, 
-                                gamPDOC.pred, 
-                                se.fit = TRUE, 
-                                type = "response"))
-  
-  gamPDOC.pred <- gamPDOC.pred %>% mutate(upper = fit + (1.96 * se.fit),
-                                            lower = fit - (1.96 * se.fit))
-  
-  gamNPDOC.pred <- cbind(gamNPDOC.pred,
-                        predict(gamNPDOC, 
-                                gamNPDOC.pred, 
-                                se.fit = TRUE, 
-                                type = "response"))
-  
-  gamNPDOC.pred <- gamNPDOC.pred %>% mutate(upper = fit + (1.96 * se.fit),
-                                          lower = fit - (1.96 * se.fit))
-  
-  # with trophic position
-  gamNDOCtp.pred <- cbind(gamNDOCtp.pred,
-                        predict(gamNDOC.tp, 
-                                gamNDOCtp.pred, 
-                                se.fit = TRUE, 
-                                type = "link"))
-  ilink <- inv_link(gamNDOC.tp)
-  gamNDOCtp.pred <- gamNDOCtp.pred %>% mutate(massnorm.N.excr = ilink(fit),
-                                          upper = ilink(fit + (1.96 * se.fit)),
-                                          lower = ilink(fit - (1.96 * se.fit)))
-  
-  gamPDOCtp.pred <- cbind(gamPDOCtp.pred,
-                        predict(gamPDOC.tp, 
-                                gamPDOCtp.pred, 
-                                se.fit = TRUE, 
-                                type = "link"))
-  ilink <- inv_link(gamPDOC.tp)
-  gamPDOCtp.pred <- gamPDOCtp.pred %>% mutate(massnorm.P.excr = ilink(fit),
-                                          upper = ilink(fit + (1.96 * se.fit)),
-                                          lower = ilink(fit - (1.96 * se.fit)))
   
   # set up plotting parameters ----
   Trophic.labels <- c('Invert/piscivore', 'Invertivore', 'Omnivore')
@@ -415,12 +400,15 @@
     labs(x = '',
          y = 'Mass-normalized excretion rates') +
     geom_hline(aes(yintercept = 0), linetype = 'dashed') +
-    theme(legend.key.height= unit(2, 'cm'),
-          legend.key.width= unit(4, 'cm')) +
-    scale_colour_manual(name = 'DOC level',
+    theme(legend.key.height= unit(1, 'lines'),
+          legend.key.width= unit(2, 'lines')) +
+    # scale_y_continuous(trans='log10',
+    #                    breaks=trans_breaks('log10', function(x) 10^x),
+    #                    labels=trans_format('log10', math_format(10^.x))) +
+    scale_colour_manual(name = 'DOC',
                       labels = c('low', 'medium', 'high'),
                       values = met.brewer('Greek', 3, direction = -1)) +
-    scale_fill_manual(name = 'DOC level',
+    scale_fill_manual(name = 'DOC',
                        labels = c('low', 'medium', 'high'),
                        values = met.brewer('Greek', 3, direction = -1)) +
     theme_bw() 
