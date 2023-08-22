@@ -7,6 +7,8 @@
   library(mgcv) # for GAM analysis (gam function)
   library(gratia) # to draw GAM
   library(vegan) # for NMDS
+  library(cluster) # loaded for pairwiseAdonis
+  library(pairwiseAdonis) # for NMDS posthoc
   library(car) # for Anova function
   library(rstatix) # for many pipe-friendly stat tools
   
@@ -28,27 +30,22 @@
   # GAM ----
   # without trophic position and with population averages
   # create functions to calculate all HGAMs following a template
-  # option 1
-  hgam_s <- function(y, x, k1, df) {
+  hgam_s <- function(y, x, k1) {
     mod <- gam(y ~ s(x, k = k1, m = 2, bs = 'tp'),
-               method = 'REML', data = df,
-               family = tw())
-    return(mod)
-  }
-  
-  hgam <- function(y, x, k1, k2) {
-    mod <- gam(y ~ s(x, by = Trophic.position,
-                     k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position, bs = 're', k = k2),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
   }
   
-  hgam_log <- function(y, x, k1, k2) {
-    mod <- gam(y ~ s(x, by = Trophic.position,
-                     k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position, bs = 're', k = k2),
+  hgam <- function(y, x, k1) {
+    mod <- gam(y ~ s(x, k = k1, m = 2, bs = 'tp'),
+               method = 'REML', data = excr,
+               family = tw())
+    return(mod)
+  }
+  
+  hgam_log <- function(y, x, k1) {
+    mod <- gam(log10(y) ~ s(x, k = k1, m = 2, bs = 'tp'),
                method = 'REML', data = excr)
     return(mod)
   }
@@ -73,30 +70,30 @@
                       draw = draw)
   # ...N excretion ----
   # DOC
-  gamNDOC_s <- hgam_s(excr$massnorm.N.excr, excr$AmDOC, 9, excr)
-  gamNDOC <- hgam(excr$massnorm.N.excr, excr$AmDOC, 6, 2)
+  # gamNDOC_s <- hgam_s(excr$massnorm.N.excr, excr$AmDOC, 9, excr)
+  gamNDOC <- hgam(excr$massnorm.N.excr, excr$AmDOC, 9)
   lapply(gam.details, function(f) f(gamNDOC))
-  AIC(gamNDOC_s, gamNDOC)
+  #AIC(gamNDOC_s, gamNDOC)
   # DOM
-  gamNDOM <- hgam(excr$massnorm.N.excr, excr$PC1, 7, 2)
+  gamNDOM <- hgam(excr$massnorm.N.excr, excr$PC1, 9)
   lapply(gam.details, function(f) f(gamNDOM))
   
   # ...P excretion ----
   # DOC
-  gamPDOC_s <- hgam_s(excr$massnorm.P.excr, excr$AmDOC, 7, excr)
-  gamPDOC <- hgam(excr$massnorm.P.excr, excr$AmDOC, 5, 2)
+  # gamPDOC_s <- hgam_s(excr$massnorm.P.excr, excr$AmDOC, 7, excr)
+  gamPDOC <- hgam(excr$massnorm.P.excr, excr$AmDOC, 5)
   lapply(gam.details, function(f) f(gamPDOC))
-  AIC(gamNDOC_s, gamNDOC)
+  #AIC(gamNDOC_s, gamNDOC)
   # DOM
-  gamPDOM <- hgam(excr$massnorm.P.excr, excr$PC1, 6, 2)
+  gamPDOM <- hgam(excr$massnorm.P.excr, excr$PC1, 6)
   lapply(gam.details, function(f) f(gamPDOM))
   
   # ...N:P excretion ----
   # DOC
-  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, excr$AmDOC, 5, 2)
+  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, excr$AmDOC, 6)
   lapply(gam.details, function(f) f(gamNPDOC))
   # DOM
-  gamNPDOM <- hgam_log(excr$massnorm.NP.excr, excr$PC1, 6, 2)
+  gamNPDOM <- hgam_log(excr$massnorm.NP.excr, excr$PC1, 7)
   lapply(gam.details, function(f) f(gamNPDOM))
   
   # create list of gam functions to store
@@ -106,19 +103,24 @@
   # gam_DOM_log_list <- list(c(gamNPDOM))
   
   # ANOVA ----
-  aov_C <- function(x) {
-    aov(log10(x) ~ DOC.level, 
-        data = excr)
+  excr.aov <- excr %>% filter(!is.na(massnorm.C.excr),
+                              massnorm.C.excr < 32.56)
+  aov_DOC <- function(x) {
+    m <- aov(log10(x) ~ DOC.level, 
+        data = excr.aov)
+    print(summary(m))
+    return(m)
   }
-  aovC <- aov_C(excr$massnorm.C.excr)
-  summary(aovC)
   
-  aovCN <- aov_C(excr$massnorm.CN.excr)
-  summary(aovCN)
-  posthoc <- tukey_hsd(aovCN, conf.level = .95)
-
-  aovCP <- aov_C(excr$massnorm.CP.excr)
-  summary(aovCP)
+  aovC <- aov_DOC(excr.aov$massnorm.C.excr)
+  aovC.posthoc <- tukey_hsd(aovC) 
+  aovC.posthoc
+  
+  aovCN <- aov_DOC(excr.aov$massnorm.CN.excr)
+  aovCN.posthoc <- tukey_hsd(aovCN) 
+  aovCN.posthoc
+  
+  aovCP <- aov_DOC(excr.aov$massnorm.CP.excr)
   
   # t-test ----
   # NEED TO LOOP IT SOMEHOW
@@ -127,23 +129,118 @@
     t_test(massnorm.excr ~ 1, mu = 0,  alternative = "greater")
   
   # NMDS ----
-  # transform NMDS dataset to a matrix
+  # separate dataset between each site (low, medium, high)
+  excr.nmds.l <- excr.nmds %>% 
+    dplyr::filter(Site.name == 'L224') 
   excr.nmds.m <- excr.nmds %>% 
-    select(-c(ID, Species.code, Site.name)) %>% 
-    as.matrix() 
+    dplyr::filter(Site.name == 'L239') 
+  excr.nmds.h <- excr.nmds %>% 
+    dplyr::filter(Site.name == 'L222')
+  
+  # transform NMDS dataset to a matrix
+  mtx <- function(df) {
+    df %>% select(-c(ID, Source, Site.name, Trophic.position)) %>% 
+      as.matrix()
+  }
+  excr.nmds.lm <- mtx(excr.nmds.l)
+  excr.nmds.mm <- mtx(excr.nmds.m)
+  excr.nmds.hm <- mtx(excr.nmds.h)
+  excr.nmds.allm <- mtx(excr.nmds)
   
   # do NMDS
-  set.seed(1)
-  nmds <- metaMDS(excr.nmds.m, distance = 'bray', k = 2, trymax = 100)
-  stressplot(nmds)
+  nmds <- function(df) {
+    set.seed(1)
+    m <- metaMDS(df, autotransform = FALSE,
+                 distance = "bray",
+                 engine = "monoMDS",
+                 k = 2,
+                 weakties = TRUE,
+                 model = "global",
+                 maxit = 300,
+                 try = 40,
+                 trymax = 100)
+    stressplot(m)
+    cat('stress:', m$stress)
+    return(m)
+  }
+  
+  nmds.l <- nmds(excr.nmds.lm)
+  nmds.m <- nmds(excr.nmds.mm)
+  nmds.h <- nmds(excr.nmds.hm)
+  nmds.all <- nmds(excr.nmds.allm)
   
   # First create a data frame of the scores from the individual sites.
   # This data frame will contain x and y values for where sites are located.
-  nmds.scores <- scores(nmds)$sites %>% 
-    as_tibble(rownames = 'sample') %>% 
-    dplyr::mutate(
-      ID = excr.nmds$ID,
-      Site.name = excr.nmds$Site.name,
-      Species.code = excr.nmds$Species.code
-    )
+  nmds_score <- function(m, df) {
+    scores(m)$sites %>% 
+      as_tibble(rownames = 'sample') %>% 
+      dplyr::mutate(
+        ID = df$ID,
+        Site.name = df$Site.name,
+        Source = df$Source,
+        Trophic.position = df$Trophic.position
+      )
+  }
+  
+  nmds.l.scores <- nmds_score(nmds.l, excr.nmds.l)
+  nmds.m.scores <- nmds_score(nmds.m, excr.nmds.m)
+  nmds.h.scores <- nmds_score(nmds.h, excr.nmds.h)
+  nmds.all.scores <- nmds_score(nmds.all, excr.nmds)
+  
+  # # get hull data to draw polygons on plot
+  # FM <-
+  #   nmds.l.scores[nmds.l.scores$Source == "FM",][chull(nmds.l.scores[nmds.l.scores$Source ==
+  #                                                                      "FM", c("NMDS1", "NMDS2")]),]
+  # PD <-
+  #   nmds.l.scores[nmds.l.scores$Source == "PD",][chull(nmds.l.scores[nmds.l.scores$Source ==
+  #                                                                      "PD", c("NMDS1", "NMDS2")]),]
+  # WS <-
+  #   nmds.l.scores[nmds.l.scores$Source == "WS",][chull(nmds.l.scores[nmds.l.scores$Source ==
+  #                                                                      "WS", c("NMDS1", "NMDS2")]),]
+  # L224 <-
+  #   nmds.l.scores[nmds.l.scores$Source == "AmL224",][chull(nmds.l.scores[nmds.l.scores$Source ==
+  # "AmL224", c("NMDS1", "NMDS2")]),]
+  
+  O <-
+    nmds.l.scores[nmds.l.scores$Trophic.position == "O",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
+                                                                       "O", c("NMDS1", "NMDS2")]),]
+  I <-
+    nmds.l.scores[nmds.l.scores$Trophic.position == "I",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
+                                                                       "I", c("NMDS1", "NMDS2")]),]
+  L224 <-
+    nmds.l.scores[nmds.l.scores$Trophic.position == "AmL224",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
+                                                                           "AmL224", c("NMDS1", "NMDS2")]),]
+  # hull.l <- rbind(FM, PD, WS, L224)
+  hull.l <- rbind(I, O, L224)
+  
+  # do PERMANOVA to test for differences between species/ambient water
+  perma <- function(matrix, df) {
+    set.seed(1)
+    permanova <- adonis2(matrix ~ Trophic.position, df)
+    print(permanova)
+  }
+  perma.l <- perma(excr.nmds.lm, excr.nmds.l)
+  posthoc.l <- pairwise.adonis2(excr.nmds.lm ~ Trophic.position, excr.nmds.l)
+  posthoc.l
+  perma.m <- perma(excr.nmds.mm, excr.nmds.m)
+  perma.h <- perma(excr.nmds.hm, excr.nmds.h)
+  perma.all <- adonis2(excr.nmds.allm ~ Trophic.position*Site.name, excr.nmds, 
+                       methods = 'bray')
+  perma.all
+  posthoc.all <- pairwise.adonis2(excr.nmds.allm ~ Trophic.position, excr.nmds)
+  posthoc.all
+  
+  # do posthoc analysis
+  
+  # calculate homogeneity of group dispersion (variance)
+  disper <- function(matrix, var){
+    dis <- vegdist(matrix)
+    result <- betadisper(dis, var)
+    print(anova(result))
+  }
+  # there is heterogeneity of variances for all tests
+  disper.l <- disper(excr.nmds.lm, excr.nmds.l$Source)
+  disper.m <- disper(excr.nmds.mm, excr.nmds.m$Source)
+  disper.h <- disper(excr.nmds.hm, excr.nmds.h$Source)
+  disper.all <- disper(excr.nmds.allm, excr.nmds$Source)
   

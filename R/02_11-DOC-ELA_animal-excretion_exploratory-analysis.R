@@ -163,6 +163,30 @@
   ggsave('preliminary results/N_Pexcretion_av.png', 
          width = 14, height = 7, 
          units = 'in', dpi = 600)
+  
+  # DOC vs DOC levels
+  ggboxplot(excr %>%  dplyr::filter(!is.na(massnorm.C.excr)),
+            "DOC.level", "massnorm.C.excr") 
+  excr %>% 
+    select(c(C.excretion.rate, massnorm.C.excr, DOC.level)) %>% 
+    group_by(DOC.level) %>% 
+    identify_outliers(C.excretion.rate)
+  
+  # normality check
+  # Build the linear model
+  model  <- lm(log10(massnorm.C.excr) ~ DOC.level, data = excr.aov)
+  # Create a QQ plot of residuals
+  ggqqplot(residuals(model))
+  
+  # Compute Shapiro-Wilk test of normality
+  shapiro_test(residuals(model))
+  
+  # QQ plot for each group level
+  ggqqplot(excr.aov, 'massnorm.C.excr', facet.by = 'DOC.level')
+  
+  # check homogeneity of variances
+  excr.aov %>% levene_test(massnorm.C.excr ~ DOC.level)
+
 
   
   
