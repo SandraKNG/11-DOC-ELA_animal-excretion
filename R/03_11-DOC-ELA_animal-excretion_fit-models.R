@@ -96,12 +96,6 @@
   gamNPDOM <- hgam_log(excr$massnorm.NP.excr, excr$PC1, 7)
   lapply(gam.details, function(f) f(gamNPDOM))
   
-  # create list of gam functions to store
-  # gam_DOC_list <- list(c(gamNDOC, gamPDOC))
-  # gam_DOM_list <- list(c(gamNDOM, gamPDOM))
-  # gam_DOC_log_list <- list(c(gamNPDOC))
-  # gam_DOM_log_list <- list(c(gamNPDOM))
-  
   # ANOVA ----
   excr.aov <- excr %>% filter(!is.na(massnorm.C.excr),
                               massnorm.C.excr < 32.56)
@@ -121,6 +115,9 @@
   aovCN.posthoc
   
   aovCP <- aov_DOC(excr.aov$massnorm.CP.excr)
+  
+  aov_DOC(excr.aov$massnorm.BA.excr)
+  tukey_hsd(excr.aov, log10(massnorm.SUVA.excr) ~ DOC.level)
   
   # t-test ----
   # NEED TO LOOP IT SOMEHOW
@@ -187,38 +184,14 @@
   nmds.h.scores <- nmds_score(nmds.h, excr.nmds.h)
   nmds.all.scores <- nmds_score(nmds.all, excr.nmds)
   
-  # # get hull data to draw polygons on plot
-  # FM <-
-  #   nmds.l.scores[nmds.l.scores$Source == "FM",][chull(nmds.l.scores[nmds.l.scores$Source ==
-  #                                                                      "FM", c("NMDS1", "NMDS2")]),]
-  # PD <-
-  #   nmds.l.scores[nmds.l.scores$Source == "PD",][chull(nmds.l.scores[nmds.l.scores$Source ==
-  #                                                                      "PD", c("NMDS1", "NMDS2")]),]
-  # WS <-
-  #   nmds.l.scores[nmds.l.scores$Source == "WS",][chull(nmds.l.scores[nmds.l.scores$Source ==
-  #                                                                      "WS", c("NMDS1", "NMDS2")]),]
-  # L224 <-
-  #   nmds.l.scores[nmds.l.scores$Source == "AmL224",][chull(nmds.l.scores[nmds.l.scores$Source ==
-  # "AmL224", c("NMDS1", "NMDS2")]),]
-  
-  O <-
-    nmds.l.scores[nmds.l.scores$Trophic.position == "O",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
-                                                                       "O", c("NMDS1", "NMDS2")]),]
-  I <-
-    nmds.l.scores[nmds.l.scores$Trophic.position == "I",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
-                                                                       "I", c("NMDS1", "NMDS2")]),]
-  L224 <-
-    nmds.l.scores[nmds.l.scores$Trophic.position == "AmL224",][chull(nmds.l.scores[nmds.l.scores$Trophic.position ==
-                                                                           "AmL224", c("NMDS1", "NMDS2")]),]
-  # hull.l <- rbind(FM, PD, WS, L224)
-  hull.l <- rbind(I, O, L224)
-  
   # do PERMANOVA to test for differences between species/ambient water
+  # AND do posthoc analysis
   perma <- function(matrix, df) {
     set.seed(1)
     permanova <- adonis2(matrix ~ Trophic.position, df)
     print(permanova)
   }
+  
   perma.l <- perma(excr.nmds.lm, excr.nmds.l)
   posthoc.l <- pairwise.adonis2(excr.nmds.lm ~ Trophic.position, excr.nmds.l)
   posthoc.l
@@ -230,17 +203,16 @@
   posthoc.all <- pairwise.adonis2(excr.nmds.allm ~ Trophic.position, excr.nmds)
   posthoc.all
   
-  # do posthoc analysis
-  
   # calculate homogeneity of group dispersion (variance)
   disper <- function(matrix, var){
     dis <- vegdist(matrix)
     result <- betadisper(dis, var)
     print(anova(result))
   }
+  
   # there is heterogeneity of variances for all tests
-  disper.l <- disper(excr.nmds.lm, excr.nmds.l$Source)
-  disper.m <- disper(excr.nmds.mm, excr.nmds.m$Source)
-  disper.h <- disper(excr.nmds.hm, excr.nmds.h$Source)
-  disper.all <- disper(excr.nmds.allm, excr.nmds$Source)
+  disper.l <- disper(excr.nmds.lm, excr.nmds.l$Trophic.position)
+  disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position)
+  disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position)
+  disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position)
   

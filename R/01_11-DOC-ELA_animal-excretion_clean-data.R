@@ -109,9 +109,9 @@
   # filter out some outliers
   # excr.DOM.var <- excr.DOM.var %>%
   #   dplyr::filter(log10(C1.excretion.rate) > -4.5)
-  excr.NPC.var <- excr.NPC.var %>% mutate(C.excretion.rate = 
-                                            if_else(C.excretion.rate == 12.5, 
-                                                    NA, .))
+  # excr.NPC.var <- excr.NPC.var %>% mutate(C.excretion.rate = 
+  #                                           case_when(C.excretion.rate ~ 12.5, 
+  #                                                   NA, .))
   
   # combine NPC and DOM datasets
   excr.var <- left_join(excr.NPC.var, excr.DOM.var, by = c('ID', 'Mass', 'Site.name'))
@@ -171,7 +171,7 @@
   # add newly created columns to excr dataset
   excr <- left_join(excr, excr.var)
   
-  # Create datasets for data analysis ----
+  ####################### Create datasets for data analysis ###################
   # function to rename some DOM characteristics
   rename_DOM <- function(df) {
     df <- df %>% 
@@ -182,6 +182,7 @@
       rename_with(~ sub("Am", "", .))
     return(df)
   }
+  
   # ..make excr dataset with one entry for each excretion average ----
   # ..N/P excretion species average ----
   excr.sp <- excr %>% 
@@ -246,26 +247,6 @@
   }
   cat("AmCtot:", AmCtot, "\n")
   
-  # # transform PARAFAC components into percentages for excretion rates
-  # Calc_Ctot <- function(df) {
-  #   result <- rowSums(df[, c("C1", "C2", "C3", "C4", "C5", "C7")])
-  #   return(result)
-  # }
-  # 
-  # for (site in unique(excr$Site.name)) {
-  #   Ctot <- Calc_Ctot(excr)
-  #   
-  #   for (col in c("C1", "C2", "C3", "C4", "C5", "C7")) {
-  #     col_name <- paste0(col, "per")
-  #     excr <- excr %>%
-  #       mutate(!!col_name := !!sym(col) / Ctot * 100)
-  #   }
-  #   excr <- excr %>%
-  #     mutate(C_humicper = C1per + C2per + C3per,
-  #            C_microbialper = C5per)
-  # }
-  # cat("Ctot:", Ctot, "\n")
-  
   # ..prepare NMDS dataset ----
   excr.amb <- excr.pca %>% 
     rename(ID = Site.name) %>% 
@@ -274,47 +255,30 @@
                   Source = c('AmL222', 'AmL224', 'AmL239'),
                   Trophic.position = c('AmL222', 'AmL224', 'AmL239')) %>% 
     rename_DOM() %>% 
-    select(-c(C1per:C_microbialper), -DOC)
-    # select(ID, Site.name, Source, C1:C7)
+    select(
+      -c(C1per:C_microbialper),
+      -DOC
+    )
   
   excr.nmds <- excr %>% 
     select(c(
       ID, Site.name, Species.code, Trophic.position,
-      # DOC, BA, SR, FI, HIX.ohno, SUVA254, C1:C7, -C6,
-      # massnorm.C1.excr:massnorm.C7.excr,
       ends_with('excr'),
       -ends_with(c('N.excr', 'P.excr', 'C.excr'))
-      # -ends_with('excretion.rate'),
-      # -ends_with('excretion')
-      # -starts_with(c('N.e', 'P.e'))
     )
     ) %>%
-    # dplyr::filter(
-    #   !between(ID, 935, 946)
-    #   !ID %in% c(1008, 1012, 1013, 115, 901, 904, 907, 911, 
-    #              907, 927, 928, 929, 930)
-     # ) %>% 
     mutate(across(where(is.numeric),
                   ~ if_else(. < 0, 0, .)),
            ID = as.character(ID)) %>% 
     rename_with( ~ sub("massnorm.", "", .)) %>%
     rename_with( ~ sub(".excr", "", .)) %>%
-    # rename(
-    #   Source = Species.code,
-    #   HIX = HIX.ohno,
-    #   βα = BA
-    # ) %>% 
-    # rename(
-    #   Source = Species.code
-    # ) %>% 
     rename(
       Source = Species.code,
       SUVA254 = SUVA,
       βα = BA
     ) %>%
-  # rename_with(~ sub(".excretion.rate", "", .), .cols = where(is.numeric)) %>%
     bind_rows(excr.amb) %>%
-    dplyr::filter(!is.na(C1))
+    dplyr::filter(!is.na(C4))
    
   # ..summary statistics ----
   excr.ss <- excr %>% 

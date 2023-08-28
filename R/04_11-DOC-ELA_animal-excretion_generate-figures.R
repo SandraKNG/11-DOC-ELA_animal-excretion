@@ -232,12 +232,12 @@
             labels = c('(a)', '(b)', '(c)', '(d)', '(e)', '(f)'),
             font.label = list(size = 10))
   
-  ggsave('figures/final-figures/Fig1.png', 
+  ggsave('figures/final-figures/Fig1.tiff', 
          width = 6, height = 8, 
-         units = 'in', dpi = 300)
+         units = 'in', dpi = 600, compression = 'lzw')
   
   # Figure 2 ----
-  # ..DOC excretion vs. DOC ----
+  # ...DOC excretion vs. DOC ----
   Cexcr.p <- plot_boxplot(excr.aov$massnorm.C.excr) +
     labs(x = '',
          y = expression(atop(Log[10]~'mass-normalized',
@@ -249,7 +249,7 @@
     theme(axis.text.x = element_blank())
   Cexcr.p
   
-  # ..DOC:N excretion vs. DOC ----
+  # ...DOC:N excretion vs. DOC ----
   CNexcr.p <- plot_boxplot(excr.aov$massnorm.CN.excr) +
     labs(x = '',
          y = expression(atop(Log[10]~'DOC:N excretion',
@@ -261,7 +261,7 @@
     geom_segment(x = 3, xend = 3, y = -1.25, yend = -1.35, linewidth = line.size)
   CNexcr.p
   
-  # ..DOC:P excretion vs. DOC ----
+  # ...DOC:P excretion vs. DOC ----
   CPexcr.p <- plot_boxplot(excr.aov$massnorm.CP.excr) +
     labs(x = 'DOC',
          y = expression(atop(Log[10]~'DOC:P excretion',
@@ -275,16 +275,16 @@
             font.label = list(size = 10), label.x = 0.17, label.y = 1,
             nrow = 3, align = "v", legend = 'none')
   
-  ggsave('figures/final-figures/Fig2.png', 
+  ggsave('figures/final-figures/Fig2.tiff', 
          width = 4, height = 6, 
-         units = 'in', dpi = 600)
+         units = 'in', dpi = 600, compression = 'lzw')
   
   # Figure 3 ----
   DOMexcr.p <- ggplot(excr.DOM, aes(x = type, y = massnorm.excr)) +
     geom_boxplot(outlier.shape = NA, linewidth = line.size) +
     geom_jitter(aes(colour = DOC.level, fill = DOC.level), shape = 21, 
                 size = point.size, stroke = .25, alpha = .6, width = .25) +
-    labs(x = 'DOM characteristics',
+    labs(x = 'DOM optical parameters',
          y = 'Mass-normalized excretion rates') +
     geom_hline(aes(yintercept = 0), linetype = 'dashed') +
     guides(colour = guide_legend(override.aes = list(size = point.size + .5))) +
@@ -299,39 +299,23 @@
           axis.title.y = element_text(vjust = .7))
   DOMexcr.p
   
-  ggsave('figures/final-figures/Fig3.png', 
+  ggsave('figures/final-figures/Fig3.tiff', 
          width = 7, height = 5, 
-         units = 'in', dpi = 600)
+         units = 'in', dpi = 600, compression = 'lzw')
   
   # Figure 4 ----
   # ...low DOC ----
   nmds.l.p <- plot_nmds(nmds.l.scores) +
-    # geom_polygon(data = hull.l,
-    #              aes(
-    #                x = NMDS1,
-    #                y = NMDS2,
-    #                fill = Trophic.position,
-    #                group = Trophic.position
-    #              ),
-    #              alpha = .2) +
     stat_ellipse(level = .95, aes(colour = Trophic.position)) +
     scale_shape_manual(values = c(8, 16, 15, 17)) +
     scale_color_manual(values = c("#f5c34d", "steelblue4", "#43b284")) +
     scale_fill_manual(values = c("#f5c34d", "steelblue4", "#43b284")) +
-    # scale_color_manual(values = c("#f5c34d", 'darkgoldenrod',
-    #                               'salmon', 'bisque3')) +
     annotate("text", x = .65, y = 1.15,
              label = 'low DOC', colour = "#f5c34d", size = text.size) +
     annotate("text", x = -1.4, y = .45,
                label = 'omnivore', colour = "#43b284", size = text.size) +
     annotate("text", x = .4, y = .2,
                label = 'invertivore', colour = "steelblue4", size = text.size) +
-    # annotate("text", x = -1.4, y = .45, 
-    #          label = 'Fathead minnows', colour = 'darkgoldenrod', size = text.size) +
-    # annotate("text", x = .4, y = .18, 
-    #          label = 'Pearl dace', colour = 'salmon', size = text.size) +
-    # annotate("text", x = -.7, y = -.65, 
-    #          label = 'White sucker', colour = 'bisque3', size = text.size) +
     xlab('')
   nmds.l.p
   
@@ -339,13 +323,10 @@
   nmds.m.p <- plot_nmds(nmds.m.scores) +
     scale_shape_manual(values = c(8, 16)) +
     scale_color_manual(values = c("#8d1c06", "#dd5129")) +
-    # scale_color_manual(values = c("#8d1c06", 'olivedrab')) +
     annotate("text", x = -1.6, y = .35, 
              label = 'medium DOC', colour = "#8d1c06", size = text.size) +
     annotate("text", x = .9, y = .1,
              label = 'invert/piscivore', colour = "#dd5129", size = text.size) +
-    # annotate("text", x = .9, y = .1, 
-    #          label = 'Yellow perch', colour = 'olivedrab', size = text.size) +
     xlab('')
   nmds.m.p
 
@@ -353,13 +334,10 @@
   nmds.h.p <- plot_nmds(nmds.h.scores) +
     scale_shape_manual(values = c(8, 16)) +
     scale_color_manual(values = c("#3c0d03", "#dd5129")) +
-    # scale_color_manual(values = c("#3c0d03", 'olivedrab')) +
     annotate("text", x = 2, y = .55, 
              label = 'high DOC', colour = "#3c0d03", size = text.size) +
     annotate("text", x = -.2, y = -.6,
              label = 'invert/piscivore', colour = "#dd5129", size = text.size)
-    # annotate("text", x = -.2, y = -.6, 
-    #          label = 'Yellow perch', colour = 'olivedrab', size = text.size) 
   nmds.h.p
   
   # combine plots ----
@@ -367,9 +345,9 @@
             labels = c("(a)", "(b)", "(c)"),
             font.label = list(size = 10), label.x = 0.13, label.y = 0.98,
             nrow = 3, align = "h", legend = 'none')
-  ggsave('figures/final-figures/Fig4_tp.png', 
+  ggsave('figures/final-figures/Fig4.tiff', 
          width = 10, height = 16, 
-         units = 'cm', dpi = 300)
+         units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S1 ----
   # plot PCA
@@ -384,7 +362,7 @@
          y = 'PC2 (14.1%)') 
   PCA.p
   
-  ggsave('figures/final-figures/FigS1.png', 
+  ggsave('figures/final-figures/FigS1.tiff', 
          width = 11, height = 11, 
-         units = 'cm', dpi = 600)
+         units = 'cm', dpi = 600, compression = 'lzw')
   
