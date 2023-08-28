@@ -99,31 +99,71 @@
   # ANOVA ----
   excr.aov <- excr %>% filter(!is.na(massnorm.C.excr),
                               massnorm.C.excr < 32.56)
-  aov_DOC <- function(x) {
-    m <- aov(log10(x) ~ DOC.level, 
-        data = excr.aov)
+  aov_DOCM <- function(x) {
+    m <- aov(log10(x)~ DOC.level, data = excr.aov)
     print(summary(m))
     return(m)
   }
   
-  aovC <- aov_DOC(excr.aov$massnorm.C.excr)
+  # DOC tests
+  aovC <- aov_DOCM(excr.aov$massnorm.C.excr)
   aovC.posthoc <- tukey_hsd(aovC) 
   aovC.posthoc
   
-  aovCN <- aov_DOC(excr.aov$massnorm.CN.excr)
+  aovCN <- aov_DOCM(excr.aov$massnorm.CN.excr)
   aovCN.posthoc <- tukey_hsd(aovCN) 
   aovCN.posthoc
   
-  aovCP <- aov_DOC(excr.aov$massnorm.CP.excr)
+  aovCP <- aov_DOCM(excr.aov$massnorm.CP.excr)
   
-  aov_DOC(excr.aov$massnorm.BA.excr)
-  tukey_hsd(excr.aov, log10(massnorm.SUVA.excr) ~ DOC.level)
+  # DOM tests
+  # Get column indices between "massnorm.SUVA.excr" and "massnorm.C7.excr"
+  start_col <- which(names(excr.var) == "massnorm.SUVA.excr")
+  end_col <- which(names(excr.var) == "massnorm.C7.excr")
+  selected_cols <- names(excr.var)[(start_col):(end_col)]
+  
+  # Create an empty list to store aov results
+  anova_results <- list()
+  tukey_results <- list()
+  
+  for (col in selected_cols) {
+    aov_result <- Anova(aov_DOCM(excr.aov[[col]]))
+    tukey_result <- tukey_hsd(excr.aov, log10(excr.aov[[col]]) ~ DOC.level)
+  
+  # Store the result in the list
+  anova_results[[col]] <- aov_result
+  tukey_results[[col]] <- tukey_result
+  
+  # Print progress
+  cat("Processed column:", col, "\n")
+  }
+  
+  # Convert the list of results to tibbles
+  anova.results <- bind_rows(anova_results, .id = "column_name")
+  tukey.results <- bind_rows(tukey_results, .id = "column_name")
+  tukey.results <- tukey.results %>% arrange(p.adj.signif, column_name)
+  print(tukey.results, n = 33)
   
   # t-test ----
-  # NEED TO LOOP IT SOMEHOW
-  excr.DOM %>% 
-    filter(type == 'C4') %>% 
-    t_test(massnorm.excr ~ 1, mu = 0,  alternative = "greater")
+  # Create an empty list to store t-test results
+  t_test_results <- list()
+  
+  # Loop through selected columns
+  for (col in selected_cols) {
+    result <- excr.var %>%
+      t_test(as.formula(paste(col, "~ 1")), mu = 0, alternative = "greater")
+    
+    # Store the result in the list
+    t_test_results[[col]] <- result
+    
+    # Print progress
+    cat("Processed column:", col, "\n")
+  }
+  
+  # Convert the list of results to a tibble
+  t.test.results <- bind_rows(t_test_results) 
+  t.test.results <- t.test.results %>% arrange(p)
+  t.test.results
   
   # NMDS ----
   # separate dataset between each site (low, medium, high)
