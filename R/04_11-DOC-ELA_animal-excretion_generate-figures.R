@@ -255,7 +255,7 @@
          y = expression(atop(Log[10]~'DOC:N excretion',
                              paste((molar))))) +
     theme(axis.text.x = element_blank()) +
-    annotate("text", x = 2.5, y = -1.15, label = '*', size = text.size + .5) +
+    annotate("text", x = 2.5, y = -1.15, label = '**', size = text.size + .5) +
     geom_segment(x = 2, xend = 3, y = -1.25, yend = -1.25, linewidth = line.size) +
     geom_segment(x = 2, xend = 2, y = -1.25, yend = -1.35, linewidth = line.size) +
     geom_segment(x = 3, xend = 3, y = -1.25, yend = -1.35, linewidth = line.size)
