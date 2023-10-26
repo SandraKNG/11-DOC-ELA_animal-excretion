@@ -350,19 +350,38 @@
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S1 ----
+  pca.all.p <- fviz_pca_biplot(pca.all,
+                               repel = T,
+                               label = 'var',
+                               title = '',
+                               ggtheme = theme_bw()) +
+    xlim(-5,5) +
+    ylim(-3,3) +
+    labs(x = 'PC1 (39.1%)',
+         y = 'PC2 (30%)') 
+  pca.all.p
+  
+  ggsave('tables_figures/final_tables_figures/FigS1.tiff', 
+         width = 11, height = 11, 
+         units = 'cm', dpi = 600, compression = 'lzw')
+  
+  # Figure S2 ----
   # plot PCA
-  PCA.p <- fviz_pca_biplot(pca,
+  pca.DOM.p <- fviz_pca_biplot(pca.DOM,
                            repel = T,
                            label = 'var',
+                           col.ind = excr.pca$AmDOC,
                            title = '',
                            ggtheme = theme_bw()) +
     xlim(-5,5) +
     ylim(-3,3) +
-    labs(x = 'PC1 (75.7%)',
-         y = 'PC2 (14.1%)') 
-  PCA.p
+    labs(x = 'PC1 (75.2%)',
+         y = 'PC2 (13%)') +
+    scale_colour_gradient2(name = "DOC \n(mg C/L)", high = "#3c0d03")
+  pca.DOM.p
   
-  ggsave('figures/final-figures/FigS1.tiff', 
-         width = 11, height = 11, 
+  ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
+         width = 12, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
+
   

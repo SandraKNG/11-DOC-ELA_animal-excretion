@@ -30,7 +30,11 @@
       Trophic.position = factor(
         ifelse(Species.code == 'YP', 'C', ifelse(Species.code == 'PD',
                                                  'I', 'O')
-      ))) %>% 
+      )),
+      Trophic.position2 = factor(
+        ifelse(Species.code == 'YP' | Species.code == 'PD', 'I', 'O')
+      )
+      ) %>% 
     # filter out control samples + fish that could have had a contaminated water
     filter(
       !Species.code %in% c('CTL1', 'CTL2', 'CTL3', 'CTL4'),
@@ -223,7 +227,8 @@
     summarise(across(c(
       starts_with('Am'),-AmC6,-starts_with(c(
         'AmA', 'AmP', 'AmS2', 'Ambi', 'AmS3', 'AmHis', 'AmR'
-      ))
+      )),
+      Area:Part.P
     ),
     \(x) mean(x, na.rm = TRUE))) 
   
@@ -286,7 +291,8 @@
              'Mass')) %>% 
     describe_distribution()
   
-  excrtp.ss <- excr %>% group_by(Trophic.position) %>%
+  excrtp.ss <- excr %>% group_by(Site.name, Trophic.position) %>%
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
              'Mass')) %>% 
     describe_distribution()
+  

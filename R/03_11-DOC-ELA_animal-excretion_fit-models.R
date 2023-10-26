@@ -13,32 +13,64 @@
   library(rstatix) # for many pipe-friendly stat tools
   
   # PCA ----
-  excr.pca <- excr.pca %>% select(-c(AmC1:AmC7))
-  # change variable names for plotting purposes
-  excr.pca.p <- excr.pca %>% rename_DOM()
+  # PCA to map all lake parameters except for DOM composition
+  excr.pca.all <- excr.pca %>% 
+    select(c(Site.name:AmTDP, Area:Part.P), 
+           -c(pH, Zmean, Zmax)) %>% 
+    rename(DOC = AmDOC,
+           TDP = AmTDP) %>% 
+    mutate(Thermo.depth = replace_na(Thermo.depth, 1.70))
   # do PCA
-  pca <- princomp(excr.pca.p[, 3:13], cor = TRUE, scores = TRUE)
-  biplot(pca)
+  pca.all <- princomp(excr.pca.all[, 2:11],cor = TRUE, scores = TRUE)
+  biplot(pca.all)
   # check loadings
-  pca$loadings
+  pca.all$loadings
   # Extract PC1 scores
-  pca.PC1 <- pca$scores[,1]
+  pca.PC1 <- pca.all$scores[,1]
   # add it to current datasets
-  excr.pca <- excr.pca %>% mutate(PC1 = pca.PC1)
+  excr.pca <- excr.pca %>% mutate(PC1_all = pca.PC1)
   excr <- left_join(excr, excr.pca)
+  
+  # PCA to extract PC1 for DOM composition
+  # change variable names for plotting purposes
+  excr.pca.DOM <- excr.pca %>% 
+    select(-c(AmC1:Part.P)) %>% 
+    rename_DOM() %>% 
+    rename_with(~ gsub("per", "", .x, fixed = TRUE)) 
+  # do PCA
+  pca.DOM <- princomp(excr.pca.DOM[, 5:15], cor = TRUE, scores = TRUE)
+  biplot(pca.DOM)
+  # check loadings
+  pca.DOM$loadings
+  # Extract PC1 scores
+  pca.DOM.PC1 <- pca.DOM$scores[,1]
+  # add it to current datasets
+  excr.pca <- excr.pca %>% mutate(PC1 = pca.DOM.PC1)
+  excr <- left_join(excr, excr.pca)
+  
+  # correlation tests ----
+  cor.test(excr.pca$AmDOC, excr.pca$PC1)
+  ggplot(excr.pca, aes(AmDOC, PC1)) +
+    geom_point(aes(colour = Site.name), size = 4) +
+    geom_smooth(method = lm, colour = 'black') +
+    xlab('DOC (mg C/L)') +
+    theme_classic(base_size = 20) +
+    annotate('text', x = 4.5, y = 7, 
+             size = 5, label = 'cor = 0.9, p < 0.001')
+  cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
+  
+  # correlation matrix
+  excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
+  cor.mx <- cor(excr.cor[2:26])
+  corrplot(cor.mx)
   
   # GAM ----
   # without trophic position and with population averages
   # create functions to calculate all HGAMs following a template
-  hgam_s <- function(y, x, k1) {
-    mod <- gam(y ~ s(x, k = k1, m = 2, bs = 'tp'),
-               method = 'REML', data = excr,
-               family = tw())
-    return(mod)
-  }
   
-  hgam <- function(y, x, k1) {
-    mod <- gam(y ~ s(x, k = k1, m = 2, bs = 'tp'),
+  hgam <- function(y, k1) {
+    mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're', k = 3),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
@@ -71,17 +103,17 @@
   # ...N excretion ----
   # DOC
   # gamNDOC_s <- hgam_s(excr$massnorm.N.excr, excr$AmDOC, 9, excr)
-  gamNDOC <- hgam(excr$massnorm.N.excr, excr$AmDOC, 9)
-  lapply(gam.details, function(f) f(gamNDOC))
-  #AIC(gamNDOC_s, gamNDOC)
-  # DOM
-  gamNDOM <- hgam(excr$massnorm.N.excr, excr$PC1, 9)
-  lapply(gam.details, function(f) f(gamNDOM))
+  gamNDOC_s <- hgam(excr$massnorm.N.excr, 9)
+  lapply(gam.details, function(f) f(gamNDOC_s))
+  AIC(gamNDOC_s, gamNDOC)
+  # # DOM
+  # gamNDOM <- hgam(excr$massnorm.N.excr, excr$PC1, 9)
+  # lapply(gam.details, function(f) f(gamNDOM))
   
   # ...P excretion ----
   # DOC
   # gamPDOC_s <- hgam_s(excr$massnorm.P.excr, excr$AmDOC, 7, excr)
-  gamPDOC <- hgam(excr$massnorm.P.excr, excr$AmDOC, 5)
+  gamPDOC <- hgam(excr$massnorm.P.excr, 5)
   lapply(gam.details, function(f) f(gamPDOC))
   #AIC(gamNDOC_s, gamNDOC)
   # DOM
