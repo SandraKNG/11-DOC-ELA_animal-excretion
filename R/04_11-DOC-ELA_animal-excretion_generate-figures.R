@@ -12,70 +12,19 @@
 
   
   # Set up prediction data ----
-  # Prediction function for trophic position
-  # make the prediction, add this and a column of standard errors to the 
-  # prediction data.frame.
-  
-  pred_df <- function(x) {
-    newdf <- with(excr, 
-                  expand.grid(x = c(seq(min(x), max(x),
-                                        length = 100), 
-                                    rep(median(x), 100))))
-    
-    function(mod) {
-      newdf_pred <- cbind(newdf, 
-                          predict(mod, newdata = newdf,
-                                  se.fit = TRUE,
-                                  type = "link"))
-      
-      ilink <- inv_link(mod)
-      newdf_pred <- newdf_pred %>%
-        mutate(response = ilink(fit),
-               upper = ilink(fit + (1.96 * se.fit)),
-               lower = ilink(fit - (1.96 * se.fit)))
-      
-      return(newdf_pred)
-    }
-  }
-  
-  # Prediction function for vertebrate classification with  pred on log scale 
-  pred_log_df <- function(x) {
-    newdf <- with(excr, 
-                  expand.grid(x = c(seq(min(x), max(x),
-                                        length = 100), 
-                                    rep(median(x), 100))))
-    
-    function(mod) {
-      newdf_pred <- cbind(newdf, 
-                          predict(mod, newdata = newdf,
-                                  se.fit = TRUE,
-                                  type = "response"))
-      
-      newdf_pred <- newdf_pred %>% 
-        mutate(upper = fit + (1.96 * se.fit),
-               lower = fit - (1.96 * se.fit))
-      
-      return(newdf_pred)
-    }
-  }
-  
-  # Storing prediction functions with different inputs
-  pred.DOC <- pred_df(excr$AmDOC)
-  pred.DOM <- pred_df(excr$PC1)
-  pred_log.DOC <- pred_log_df(excr$AmDOC)
-  pred_log.DOM <- pred_log_df(excr$PC1)
+  pred_DOC_df <- excr %>% tidyr::expand(Trophic.position2,
+                                     AmDOC = c(seq(min(AmDOC), max(AmDOC),
+                                                   length = 100),
+                                               rep(median(AmDOC), 100)))
   
   # Prediction models ----
-  gamNDOC.pred <- pred.DOC(gamNDOC)
-  gamPDOC.pred <- pred.DOC(gamPDOC)
-  gamNDOM.pred <- pred.DOM(gamNDOM)
-  gamPDOM.pred <- pred.DOM(gamPDOM)
-  gamNPDOC.pred <- pred_log.DOC(gamNPDOC)
-  gamNPDOM.pred <- pred_log.DOM(gamNPDOM)
+  gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)
+  gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)
+  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df) 
   
   # Plot ----
   # ..set up plotting parameters ----
-  Trophic.labels <- c('invert/piscivore', 'invertivore', 'omnivore')
+  Trophic.labels <- c('carnivore', 'omnivore')
   Species.labels <- c('fathead minnow', 'pearl dace', 
                       'white sucker', 'yellow perch')
   DOC.labels <- c('low', 'medium', 'high')
@@ -86,32 +35,25 @@
   text.size = 3
   
   # create plotting functions
-  plot_gam <- function(df) {
-    ggplot(df, aes(x = x, y = response)) +
-      geom_ribbon(aes(ymin = lower, ymax = upper),
+  plot_gam <- function(df, y) {
+    ggplot(df, aes(x = AmDOC, y = fitted)) +  
+      geom_point(data = excr, aes(x = AmDOC, y = y,
+                                  colour = Trophic.position2), 
+                 size = point.size, alpha = point.alpha) +
+      geom_ribbon(aes(ymin = lower, ymax = upper, fill = Trophic.position2),
                   alpha = .2) +
-      geom_line(linewidth = line.size) +
+      geom_line(aes(colour = Trophic.position2), linewidth = line.size) +
       theme_classic(base_size = 10) +
       guides(colour = guide_legend(
         override.aes = list(size = point.size + .5)
         )) +
       scale_color_manual(name = 'Trophic position',
                          labels = Trophic.labels,
-                         values = c("#dd5129", "steelblue4", "#43b284")) +
-      theme(legend.text = element_text(size = 9))
-  }
-  
-  plot_log_gam <- function(df) {
-    ggplot(df, aes(x = x, y = fit)) +
-      geom_ribbon(aes(ymin = lower, ymax = upper),
-                  alpha = .2) +
-      geom_line(linewidth = line.size) +
-      theme_classic(base_size = 10) +
-      guides(colour = guide_legend(override.aes = 
-                                     list(size = point.size + .5))) +
-      scale_color_manual(name = 'Trophic position',
+                         values = c("#dd5129",  "#43b284")) +
+      scale_fill_manual(name = 'Trophic position',
                          labels = Trophic.labels,
-                         values = c("#dd5129", "steelblue4", "#43b284")) 
+                         values = c("#dd5129","#43b284")) +
+      theme(legend.text = element_text(size = 9))
   }
   
   plot_boxplot <- function(x) {
@@ -130,19 +72,15 @@
   }
   
   plot_nmds <- function(df){
-    ggplot(df, aes(x = NMDS1, y = NMDS2, fill = Trophic.position)) +
-      geom_point(aes(colour = Trophic.position, shape = Trophic.position), 
+    ggplot(df, aes(x = NMDS1, y = NMDS2, fill = Trophic.position2)) +
+      geom_point(aes(colour = Trophic.position2, shape = Trophic.position2), 
                  size = point.size) +
       theme_classic(base_size = 10)
   }
   
   # Figure 1 ----
-  # ...DOC ----
-  # N excretion
-  NexcrDOC.p <- plot_gam(gamNDOC.pred) +
-    geom_point(data = excr, aes(x = AmDOC, y = massnorm.N.excr,
-                                   colour = Trophic.position), 
-               size = point.size, alpha = point.alpha) +
+  # # N excretion
+  NexcrDOC.p <- plot_gam(gamNDOC.pred, excr$massnorm.N.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
                              paste(N~excretion~(μg~N/g/h))))) +
@@ -151,90 +89,38 @@
   NexcrDOC.p
   
   # P excretion
-  PexcrDOC.p <- ggplot(excr, aes(x = AmDOC, y = massnorm.P.excr,
-                                           colour = Trophic.position)) +
-    geom_point(size = point.size, alpha = point.alpha) +
-    geom_hline(data = excr.ss %>%
-                 filter(Variable == 'massnorm.P.excr'), aes(yintercept = Mean),
-                linetype = 'dashed', linewidth = line.size) +
+  PexcrDOC.p <- plot_gam(gamPDOC.pred, excr$massnorm.P.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(P~excretion~(μg~P/g/h))))) +
-    theme_classic(base_size = 10) +
-    scale_color_manual(name = 'Trophic position',
-                       labels = Trophic.labels,
-                       values = met.brewer('Egypt', 3)) +
-    theme(axis.text.x = element_blank()) 
-
+                             paste(P~excretion~(μg~N/g/h))))) +
+    theme(axis.text.x = element_blank()) +
+    scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
   PexcrDOC.p
   
   # N:P excretion
-  NPexcrDOC.p <- plot_log_gam(gamNPDOC.pred) +
-    geom_point(data = excr, aes(x = AmDOC, y = log10(massnorm.NP.excr),
-                                   colour = Trophic.position), 
-               size = point.size, alpha = point.alpha) +
+  NPexcrDOC.p <- plot_gam(gamNPDOC.pred, log10(excr$massnorm.NP.excr)) +
     labs(x = expression(atop('DOC', paste('(mg C/L)'))),
          y = expression(atop(Log[10]~'mass-normalized', 
                              paste('N:P excretion (molar)')))) +
+    geom_hline(yintercept = log10(16), linetype = 'dashed', size = line.size) +
+    annotate("text", x = 8.7, y = 1.5, label = 'Redfield ratio', size = text.size) +
     scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
-  
   NPexcrDOC.p
   
-  # ...DOM ----
-  # N excretion
-  NexcrDOM.p <- plot_gam(gamNDOM.pred) +
-    geom_point(data = excr, aes(x = PC1, y = massnorm.N.excr,
-                                   colour = Trophic.position), 
-               size = point.size, alpha = point.alpha) +
-    labs(x = '',
-         y = '') +
-    theme(axis.text.x = element_blank(),
-          axis.text.y = element_blank()) 
-  NexcrDOM.p
-  
-  # P excretion
-  PexcrDOM.p <- ggplot(excr, aes(x = PC1, y = massnorm.P.excr,
-                                           colour = Trophic.position)) +
-    geom_point(size = point.size, alpha = point.alpha) +
-    geom_hline(data = excr.ss %>%
-                 filter(Variable == 'massnorm.P.excr'), aes(yintercept = Mean),
-                linetype = 'dashed', linewidth = line.size) +
-    labs(x = '',
-         y = '') +
-    theme_classic(base_size = 10) +
-    scale_color_manual(name = 'Trophic position',
-                       labels = Trophic.labels,
-                       values = met.brewer('Egypt', 3)) +
-    theme(axis.text.x = element_blank(),
-          axis.text.y = element_blank()) 
-
-  PexcrDOM.p
-  
-  # N:P excretion
-  NPexcrDOM.p <- plot_log_gam(gamNPDOM.pred) +
-    geom_point(data = excr, aes(x = PC1, y = log10(massnorm.NP.excr),
-                                   colour = Trophic.position), 
-               size = point.size, alpha = point.alpha) +
-    labs(x = expression(atop("DOM", paste("microbial-like"~~~~~~~~~~~~~~~~~~~
-                                            "humic-like"))),
-         y = '') +
-    theme(axis.text.y = element_blank()) 
-  
-  NPexcrDOM.p
   
   # combine plots ----
-  ggarrange(NexcrDOC.p, NexcrDOM.p, 
-            PexcrDOC.p, PexcrDOM.p, 
-            NPexcrDOC.p, NPexcrDOM.p,
-            label.x = 0.25, label.y = 1,
-            nrow = 3, ncol = 2, align = 'hv', heights = 1,
+  ggarrange(NexcrDOC.p, 
+            PexcrDOC.p, 
+            NPexcrDOC.p, 
+            label.x = 0.2, label.y = 1,
+            nrow = 3, ncol = 1, align = 'hv', heights = 1,
             common.legend = T,
-            labels = c('(a)', '(b)', '(c)', '(d)', '(e)', '(f)'),
+            labels = c('(a)', '(b)', '(c)'),
             font.label = list(size = 10))
   
-  ggsave('figures/final-figures/Fig1.tiff', 
-         width = 6, height = 8, 
-         units = 'in', dpi = 600, compression = 'lzw')
+  ggsave('tables_figures/final_tables_figures/Fig1.tiff', 
+         width = 10, height = 16,
+         units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 2 ----
   # ...DOC excretion vs. DOC ----
@@ -306,16 +192,16 @@
   # Figure 4 ----
   # ...low DOC ----
   nmds.l.p <- plot_nmds(nmds.l.scores) +
-    stat_ellipse(level = .95, aes(colour = Trophic.position)) +
+    stat_ellipse(level = .95, aes(colour = Trophic.position2)) +
     scale_shape_manual(values = c(8, 16, 15, 17)) +
-    scale_color_manual(values = c("#f5c34d", "steelblue4", "#43b284")) +
-    scale_fill_manual(values = c("#f5c34d", "steelblue4", "#43b284")) +
+    scale_color_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
+    scale_fill_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
     annotate("text", x = .65, y = 1.15,
              label = 'low DOC', colour = "#f5c34d", size = text.size) +
     annotate("text", x = -1.4, y = .45,
                label = 'omnivore', colour = "#43b284", size = text.size) +
-    annotate("text", x = .4, y = .2,
-               label = 'invertivore', colour = "steelblue4", size = text.size) +
+    annotate("text", x = .4, y = .3,
+               label = 'carnivore', colour = "#dd5129", size = text.size) +
     xlab('')
   nmds.l.p
   
@@ -326,7 +212,7 @@
     annotate("text", x = -1.6, y = .35, 
              label = 'medium DOC', colour = "#8d1c06", size = text.size) +
     annotate("text", x = .9, y = .1,
-             label = 'invert/piscivore', colour = "#dd5129", size = text.size) +
+             label = 'carnivore', colour = "#dd5129", size = text.size) +
     xlab('')
   nmds.m.p
 
@@ -337,7 +223,7 @@
     annotate("text", x = 2, y = .55, 
              label = 'high DOC', colour = "#3c0d03", size = text.size) +
     annotate("text", x = -.2, y = -.6,
-             label = 'invert/piscivore', colour = "#dd5129", size = text.size)
+             label = 'carnivore', colour = "#dd5129", size = text.size)
   nmds.h.p
   
   # combine plots ----
@@ -345,7 +231,7 @@
             labels = c("(a)", "(b)", "(c)"),
             font.label = list(size = 10), label.x = 0.13, label.y = 0.98,
             nrow = 3, align = "h", legend = 'none')
-  ggsave('figures/final-figures/Fig4.tiff', 
+  ggsave('tables_figures/final_tables_figures/Fig4.tiff', 
          width = 10, height = 16, 
          units = 'cm', dpi = 600, compression = 'lzw')
   
@@ -383,5 +269,19 @@
   ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
          width = 12, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
+  
+  # Figure S3 ----
+  ggplot(excr.pca, aes(AmDOC, PC1)) +
+    geom_point(aes(colour = Site.name), size = 4) +
+    geom_smooth(method = lm, colour = 'black') +
+    xlab('DOC (mg C/L)') +
+    theme_classic(base_size = 20) +
+    annotate('text', x = 4.5, y = 7, 
+             size = 5, label = 'cor = 0.9, p < 0.001')
+  
+  # export final tables ----
+  write_csv(excr, "output/excr_final.csv")
+  write_csv(excr.ss, "output/excr_summary.csv")
+  write_csv(excrtp.ss, "output/excr_summary_site_tp.csv")
 
   

@@ -32,7 +32,7 @@
                                                  'I', 'O')
       )),
       Trophic.position2 = factor(
-        ifelse(Species.code == 'YP' | Species.code == 'PD', 'I', 'O')
+        ifelse(Species.code == 'YP' | Species.code == 'PD', 'C', 'O')
       )
       ) %>% 
     # filter out control samples + fish that could have had a contaminated water
@@ -190,7 +190,7 @@
   # ..make excr dataset with one entry for each excretion average ----
   # ..N/P excretion species average ----
   excr.sp <- excr %>% 
-    group_by(Site.name, Species.code, Trophic.position, AmDOC, DOC.level) %>% 
+    group_by(Site.name, Species.code, Trophic.position2, AmDOC, DOC.level) %>% 
     summarise(
       across(
         ends_with('excr'), 
@@ -258,16 +258,16 @@
     filter(ID %in% c('L222', 'L224', 'L239')) %>% 
     dplyr::mutate(Site.name = c('L222', 'L224', 'L239'),
                   Source = c('AmL222', 'AmL224', 'AmL239'),
-                  Trophic.position = c('AmL222', 'AmL224', 'AmL239')) %>% 
+                  Trophic.position2 = c('AmL222', 'AmL224', 'AmL239')) %>% 
     rename_DOM() %>% 
     select(
       -c(C1per:C_microbialper),
-      -DOC
+      -c(DOC, TDP, TDN)
     )
   
   excr.nmds <- excr %>% 
     select(c(
-      ID, Site.name, Species.code, Trophic.position,
+      ID, Site.name, Species.code, Trophic.position2,
       ends_with('excr'),
       -ends_with(c('N.excr', 'P.excr', 'C.excr'))
     )
@@ -291,7 +291,7 @@
              'Mass')) %>% 
     describe_distribution()
   
-  excrtp.ss <- excr %>% group_by(Site.name, Trophic.position) %>%
+  excrtp.ss <- excr %>% group_by(Site.name, Trophic.position2) %>%
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
              'Mass')) %>% 
     describe_distribution()

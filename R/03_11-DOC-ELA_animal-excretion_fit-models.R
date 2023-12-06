@@ -50,13 +50,6 @@
   
   # correlation tests ----
   cor.test(excr.pca$AmDOC, excr.pca$PC1)
-  ggplot(excr.pca, aes(AmDOC, PC1)) +
-    geom_point(aes(colour = Site.name), size = 4) +
-    geom_smooth(method = lm, colour = 'black') +
-    xlab('DOC (mg C/L)') +
-    theme_classic(base_size = 20) +
-    annotate('text', x = 4.5, y = 7, 
-             size = 5, label = 'cor = 0.9, p < 0.001')
   cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
   
   # correlation matrix
@@ -76,8 +69,9 @@
     return(mod)
   }
   
-  hgam_log <- function(y, x, k1) {
-    mod <- gam(log10(y) ~ s(x, k = k1, m = 2, bs = 'tp'),
+  hgam_log <- function(y, k1) {
+    mod <- gam(log10(y) ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're', k = 3),
                method = 'REML', data = excr)
     return(mod)
   }
@@ -88,45 +82,29 @@
                family  = tw())
     return(mod)
   }
-  
-  hgam_null_log <- function(y, Trophic.position, k) {
-    mod <- gam(y ~ s(Trophic.position, bs = 're', k = k), 
-               method = 'REML', select = T, data = excr)
-    return(mod)
-  }
+
   
   # list to check all model details using lapply()
   gam.details <- list(summary = summary.gam, 
                       gam.check = gam.check, 
                       appraise = appraise, 
                       draw = draw)
+  
   # ...N excretion ----
-  # DOC
-  # gamNDOC_s <- hgam_s(excr$massnorm.N.excr, excr$AmDOC, 9, excr)
-  gamNDOC_s <- hgam(excr$massnorm.N.excr, 9)
-  lapply(gam.details, function(f) f(gamNDOC_s))
-  AIC(gamNDOC_s, gamNDOC)
-  # # DOM
-  # gamNDOM <- hgam(excr$massnorm.N.excr, excr$PC1, 9)
-  # lapply(gam.details, function(f) f(gamNDOM))
+  # DOC=
+  gamNDOC <- hgam(excr$massnorm.N.excr, 6)
+  lapply(gam.details, function(f) f(gamNDOC))
+  concurvity(test)
   
   # ...P excretion ----
   # DOC
-  # gamPDOC_s <- hgam_s(excr$massnorm.P.excr, excr$AmDOC, 7, excr)
   gamPDOC <- hgam(excr$massnorm.P.excr, 5)
   lapply(gam.details, function(f) f(gamPDOC))
-  #AIC(gamNDOC_s, gamNDOC)
-  # DOM
-  gamPDOM <- hgam(excr$massnorm.P.excr, excr$PC1, 6)
-  lapply(gam.details, function(f) f(gamPDOM))
   
   # ...N:P excretion ----
   # DOC
-  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, excr$AmDOC, 6)
+  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, 5)
   lapply(gam.details, function(f) f(gamNPDOC))
-  # DOM
-  gamNPDOM <- hgam_log(excr$massnorm.NP.excr, excr$PC1, 7)
-  lapply(gam.details, function(f) f(gamNPDOM))
   
   # ANOVA ----
   excr.aov <- excr %>% filter(!is.na(massnorm.C.excr),
@@ -208,7 +186,7 @@
   
   # transform NMDS dataset to a matrix
   mtx <- function(df) {
-    df %>% select(-c(ID, Source, Site.name, Trophic.position)) %>% 
+    df %>% select(-c(ID, Source, Site.name, Trophic.position2)) %>% 
       as.matrix()
   }
   excr.nmds.lm <- mtx(excr.nmds.l)
@@ -247,7 +225,7 @@
         ID = df$ID,
         Site.name = df$Site.name,
         Source = df$Source,
-        Trophic.position = df$Trophic.position
+        Trophic.position2 = df$Trophic.position2
       )
   }
   
@@ -260,12 +238,12 @@
   # AND do posthoc analysis
   perma <- function(matrix, df) {
     set.seed(1)
-    permanova <- adonis2(matrix ~ Trophic.position, df)
+    permanova <- adonis2(matrix ~ Trophic.position2, df)
     print(permanova)
   }
   
   perma.l <- perma(excr.nmds.lm, excr.nmds.l)
-  posthoc.l <- pairwise.adonis2(excr.nmds.lm ~ Trophic.position, excr.nmds.l)
+  posthoc.l <- pairwise.adonis2(excr.nmds.lm ~ Trophic.position2, excr.nmds.l)
   posthoc.l
   perma.m <- perma(excr.nmds.mm, excr.nmds.m)
   perma.h <- perma(excr.nmds.hm, excr.nmds.h)
@@ -283,8 +261,8 @@
   }
   
   # there is heterogeneity of variances for all tests
-  disper.l <- disper(excr.nmds.lm, excr.nmds.l$Trophic.position)
-  disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position)
-  disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position)
+  disper.l <- disper(excr.nmds.lm, excr.nmds.l$Trophic.position2)
+  disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position2)
+  disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position2)
   disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position)
   
