@@ -83,7 +83,7 @@
   NexcrDOC.p <- plot_gam(gamNDOC.pred, excr$massnorm.N.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(N~excretion~(μg~N/g/h))))) +
+                             paste(N~excretion~(μg~N~g^-1~h^-1))))) +
     theme(axis.text.x = element_blank()) +
     scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
   NexcrDOC.p
@@ -92,14 +92,14 @@
   PexcrDOC.p <- plot_gam(gamPDOC.pred, excr$massnorm.P.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(P~excretion~(μg~N/g/h))))) +
+                             paste(P~excretion~(μg~P~g^-1~h^-1))))) +
     theme(axis.text.x = element_blank()) +
     scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
   PexcrDOC.p
   
   # N:P excretion
   NPexcrDOC.p <- plot_gam(gamNPDOC.pred, log10(excr$massnorm.NP.excr)) +
-    labs(x = expression(atop('DOC', paste('(mg C/L)'))),
+    labs(x = expression(DOC~mg~C~L^-1),
          y = expression(atop(Log[10]~'mass-normalized', 
                              paste('N:P excretion (molar)')))) +
     geom_hline(yintercept = log10(16), linetype = 'dashed', size = line.size) +
@@ -119,7 +119,7 @@
             font.label = list(size = 10))
   
   ggsave('tables_figures/final_tables_figures/Fig1.tiff', 
-         width = 10, height = 16,
+         width = 10, height = 16.2,
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 2 ----
@@ -127,7 +127,7 @@
   Cexcr.p <- plot_boxplot(excr.aov$massnorm.C.excr) +
     labs(x = '',
          y = expression(atop(Log[10]~'mass-normalized',
-                             paste(DOC~excretion~(mg~C/g/h))))) +
+                             paste(DOC~excretion~(mg~C~g^-1~h^-1))))) +
     annotate("text", x = 2.5, y = 1, label = '*', size = text.size +.5) +
     geom_segment(x = 2, xend = 3, y = .9, yend = .9, linewidth = line.size) +
     geom_segment(x = 2, xend = 2, y = .9, yend = .8, linewidth = line.size) +
@@ -138,8 +138,8 @@
   # ...DOC:N excretion vs. DOC ----
   CNexcr.p <- plot_boxplot(excr.aov$massnorm.CN.excr) +
     labs(x = '',
-         y = expression(atop(Log[10]~'DOC:N excretion',
-                             paste((molar))))) +
+         y = expression(atop(Log[10]~'mass-normalized',
+                             paste(DOC:N~excretion~(molar))))) +
     theme(axis.text.x = element_blank()) +
     annotate("text", x = 2.5, y = -1.15, label = '**', size = text.size + .5) +
     geom_segment(x = 2, xend = 3, y = -1.25, yend = -1.25, linewidth = line.size) +
@@ -150,8 +150,8 @@
   # ...DOC:P excretion vs. DOC ----
   CPexcr.p <- plot_boxplot(excr.aov$massnorm.CP.excr) +
     labs(x = 'DOC',
-         y = expression(atop(Log[10]~'DOC:P excretion',
-                             paste((molar))))) +
+         y = expression(atop(Log[10]~'mass-normalized',
+                             paste(DOC:P~excretion~(molar))))) +
     theme(axis.title.x = element_text(vjust = -.4, hjust = 0.46))
   CPexcr.p
   
@@ -161,17 +161,17 @@
             font.label = list(size = 10), label.x = 0.17, label.y = 1,
             nrow = 3, align = "v", legend = 'none')
   
-  ggsave('figures/final-figures/Fig2.tiff', 
-         width = 4, height = 6, 
-         units = 'in', dpi = 600, compression = 'lzw')
+  ggsave('tables_figures/final_tables_figures/Fig2.tiff', 
+         width = 10, height = 16.2, 
+         units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 3 ----
   DOMexcr.p <- ggplot(excr.DOM, aes(x = type, y = massnorm.excr)) +
     geom_boxplot(outlier.shape = NA, linewidth = line.size) +
-    geom_jitter(aes(colour = DOC.level, fill = DOC.level), shape = 21, 
+    geom_jitter(aes(colour = DOC.level, fill = DOC.level, shape = Trophic.position2), shape = 21, 
                 size = point.size, stroke = .25, alpha = .6, width = .25) +
     labs(x = 'DOM optical parameters',
-         y = 'Mass-normalized excretion rates') +
+         y = expression(Mass-normalized~excretion~rates~(g^-1~h^-1))) +
     geom_hline(aes(yintercept = 0), linetype = 'dashed') +
     guides(colour = guide_legend(override.aes = list(size = point.size + .5))) +
     scale_colour_manual(name = 'DOC',
@@ -185,7 +185,7 @@
           axis.title.y = element_text(vjust = .7))
   DOMexcr.p
   
-  ggsave('figures/final-figures/Fig3.tiff', 
+  ggsave('tables_figures/final_tables_figures/Fig3.tiff', 
          width = 7, height = 5, 
          units = 'in', dpi = 600, compression = 'lzw')
   
@@ -243,8 +243,8 @@
                                ggtheme = theme_bw()) +
     xlim(-5,5) +
     ylim(-3,3) +
-    labs(x = 'PC1 (39.1%)',
-         y = 'PC2 (30%)') 
+    labs(x = 'PC1 (55.3%)',
+         y = 'PC2 (21.4%)')
   pca.all.p
   
   ggsave('tables_figures/final_tables_figures/FigS1.tiff', 
@@ -271,9 +271,9 @@
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S3 ----
-  ggplot(excr.pca, aes(AmDOC, PC1)) +
+  ggplot(excr.pca, aes(AmDOC, Epi.chla)) +
     geom_point(aes(colour = Site.name), size = 4) +
-    geom_smooth(method = lm, colour = 'black') +
+    #geom_smooth(method = lm, colour = 'black') +
     xlab('DOC (mg C/L)') +
     theme_classic(base_size = 20) +
     annotate('text', x = 4.5, y = 7, 

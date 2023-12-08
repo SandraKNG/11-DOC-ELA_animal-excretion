@@ -15,8 +15,8 @@
   # PCA ----
   # PCA to map all lake parameters except for DOM composition
   excr.pca.all <- excr.pca %>% 
-    select(c(Site.name:AmTDP, Area:Part.P), 
-           -c(pH, Zmean, Zmax)) %>% 
+    select(c(Site.name:AmTDN, Area:Part.P), 
+           -c(pH, Zmean, Zmax, Conductivity)) %>% 
     rename(DOC = AmDOC,
            TDP = AmTDP) %>% 
     mutate(Thermo.depth = replace_na(Thermo.depth, 1.70))
@@ -51,6 +51,7 @@
   # correlation tests ----
   cor.test(excr.pca$AmDOC, excr.pca$PC1)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
+  cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
   
   # correlation matrix
   excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
@@ -107,8 +108,9 @@
   lapply(gam.details, function(f) f(gamNPDOC))
   
   # ANOVA ----
-  excr.aov <- excr %>% filter(!is.na(massnorm.C.excr),
-                              massnorm.C.excr < 32.56)
+  excr.aov <- excr %>%
+    filter(!is.na(massnorm.C.excr),
+                              massnorm.C.excr < 32.56) 
   aov_DOCM <- function(x) {
     m <- aov(log10(x)~ DOC.level, data = excr.aov)
     print(summary(m))
@@ -155,12 +157,15 @@
   print(tukey.results, n = 33)
   
   # t-test ----
+  excr.ttest <- excr.var %>%
+    mutate(across(where(is.numeric),
+                  ~ if_else(. < 0, 0, .)))
   # Create an empty list to store t-test results
   t_test_results <- list()
   
   # Loop through selected columns
   for (col in selected_cols) {
-    result <- excr.var %>%
+    result <- excr.ttest %>%
       t_test(as.formula(paste(col, "~ 1")), mu = 0, alternative = "greater")
     
     # Store the result in the list
@@ -247,10 +252,10 @@
   posthoc.l
   perma.m <- perma(excr.nmds.mm, excr.nmds.m)
   perma.h <- perma(excr.nmds.hm, excr.nmds.h)
-  perma.all <- adonis2(excr.nmds.allm ~ Trophic.position*Site.name, excr.nmds, 
+  perma.all <- adonis2(excr.nmds.allm ~ Trophic.position2*Site.name, excr.nmds, 
                        methods = 'bray')
   perma.all
-  posthoc.all <- pairwise.adonis2(excr.nmds.allm ~ Trophic.position, excr.nmds)
+  posthoc.all <- pairwise.adonis2(excr.nmds.allm ~ Source, excr.nmds)
   posthoc.all
   
   # calculate homogeneity of group dispersion (variance)
@@ -264,5 +269,5 @@
   disper.l <- disper(excr.nmds.lm, excr.nmds.l$Trophic.position2)
   disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position2)
   disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position2)
-  disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position)
+  disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position2)
   

@@ -190,7 +190,7 @@
   # ..make excr dataset with one entry for each excretion average ----
   # ..N/P excretion species average ----
   excr.sp <- excr %>% 
-    group_by(Site.name, Species.code, Trophic.position2, AmDOC, DOC.level) %>% 
+    group_by(Site.name, Species.code, AmDOC, DOC.level) %>% 
     summarise(
       across(
         ends_with('excr'), 
@@ -202,7 +202,7 @@
   
   # ..pivot dataset for DOM excretion only ----
   excr.DOM <- excr.var %>% 
-    select(ID, Site.name, massnorm.SUVA.excr:massnorm.C7.excr) %>% 
+    select(ID, Site.name, Trophic.position2, massnorm.SUVA.excr:massnorm.C7.excr) %>% 
     mutate(
       DOC.level = factor(ifelse(Site.name == 'L224', 'low', 
                                 ifelse(Site.name == 'L239', 'med',
@@ -288,11 +288,17 @@
   # ..summary statistics ----
   excr.ss <- excr %>% 
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
-             'Mass')) %>% 
+             'massnorm.C.excr', 'massnorm.CN.excr', 'massnorm.CP.excr', 'Mass')) %>% 
+    mutate(across(where(is.numeric),
+                  ~ if_else(. < 0, 0, .))) %>% 
     describe_distribution()
   
   excrtp.ss <- excr %>% group_by(Site.name, Trophic.position2) %>%
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
              'Mass')) %>% 
+    describe_distribution()
+  
+  excr.DOM.ss <- excr.DOM.var %>% 
+    select(-c(ID, Site.name)) %>% 
     describe_distribution()
   
