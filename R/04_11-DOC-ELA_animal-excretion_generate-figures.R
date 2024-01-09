@@ -10,7 +10,6 @@
   library(ggpubr) # for ggarrange function that allows to put all graphs on 1 page
   library(factoextra) # for pca
 
-  
   # Set up prediction data ----
   pred_DOC_df <- excr %>% tidyr::expand(Trophic.position2,
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
@@ -283,5 +282,6 @@
   write_csv(excr, "output/excr_final.csv")
   write_csv(excr.ss, "output/excr_summary.csv")
   write_csv(excrtp.ss, "output/excr_summary_site_tp.csv")
+  write_csv(excrDOM.ss, "output/DOMexcr_summary.csv")
 
   

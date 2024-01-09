@@ -33,7 +33,8 @@
       )),
       Trophic.position2 = factor(
         ifelse(Species.code == 'YP' | Species.code == 'PD', 'C', 'O')
-      )
+      ),
+      Site.name = factor(Site.name)
       ) %>% 
     # filter out control samples + fish that could have had a contaminated water
     filter(
@@ -81,10 +82,11 @@
   # so that remove specific fish that showed abnormal DOM residuals
   # only for DOM variables
   excr.NPC.var <- excr %>% 
-    select(ID, Site.name, 'N.excretion.rate', 'P.excretion.rate', 'C.excretion.rate', Mass)
+    select(ID, Site.name, Trophic.position2,
+           'N.excretion.rate', 'P.excretion.rate', 'C.excretion.rate', Mass)
   # filter out fish species that showed very bad DOM residuals
   excr.DOM.var <- excr %>% 
-    select(ID, Site.name, ends_with('excretion.rate'), Mass, 
+    select(ID, Site.name, Trophic.position2, ends_with('excretion.rate'), Mass, 
            -starts_with(c('N.e', 'P.e', 'C.e'))) %>%
     dplyr::filter(
       !is.na(SUVA.excretion.rate),
@@ -100,12 +102,12 @@
     print(plot)
   }
   for (x in colnames(excr.NPC.var)) {
-    if (!x %in% c("ID", "Site.name", "Mass")) {
+    if (!x %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {
     coeff_check(x, excr.NPC.var)
     }
   }
   for (x in colnames(excr.DOM.var)) {
-    if (!x %in% c("ID", "Site.name", "Mass")) {
+    if (!x %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {
       coeff_check(x, excr.DOM.var)
     }
   }
@@ -118,7 +120,7 @@
   #                                                   NA, .))
   
   # combine NPC and DOM datasets
-  excr.var <- left_join(excr.NPC.var, excr.DOM.var, by = c('ID', 'Mass', 'Site.name'))
+  excr.var <- left_join(excr.NPC.var, excr.DOM.var)
   
   # ..loop to generate coefficient of variation for each excretion rate variable ----
   # and use it to mass-normalize each rate in excr.var data frame
@@ -126,7 +128,7 @@
   
   for (col in colnames(excr.var)) {
     # Exclude the ID + Mass columns
-    if (!col %in% c("ID", "Site.name", "Mass")) {  
+    if (!col %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {  
       
       subdf <- excr.var %>% 
         filter(!is.na(.data[[col]]), .data[[col]] > 0)  # Use .data to refer to column
@@ -300,5 +302,9 @@
   
   excr.DOM.ss <- excr.DOM.var %>% 
     select(-c(ID, Site.name)) %>% 
+    describe_distribution()
+  
+  lake.ss <- excr.pca %>% 
+    select(c('Area', 'Zmean')) %>% 
     describe_distribution()
   
