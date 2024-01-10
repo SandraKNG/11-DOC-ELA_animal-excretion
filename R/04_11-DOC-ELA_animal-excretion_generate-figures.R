@@ -15,11 +15,17 @@
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                    length = 100),
                                                rep(median(AmDOC), 100)))
+  pred_lnRR_df <- excr.vol %>% tidyr::expand(pop.density,
+                                        AmDOC = c(seq(min(AmDOC), max(AmDOC),
+                                                      length = 100),
+                                                  rep(median(AmDOC), 100)))
   
   # Prediction models ----
   gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)
   gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)
-  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df) 
+  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df)
+  gamlnRRN.pred <- fitted_values(gamlnRRN, pred_lnRR_df)
+  gamlnRRP.pred <- fitted_values(gamlnRRP, pred_lnRR_df)
   
   # Plot ----
   # ..set up plotting parameters ----
@@ -27,6 +33,11 @@
   Species.labels <- c('fathead minnow', 'pearl dace', 
                       'white sucker', 'yellow perch')
   DOC.labels <- c('low', 'medium', 'high')
+  DOM.labels <- c('terrestrial \n humic-like', 'SR (molecular size)', 'β:α (freshness)', 'HIX (humic)', 
+                  'ubiquitous \n humic-like','soil \n fulvic-like', 'protein-like', 
+                  'micrboial \n humic-like','FI (source)', expression(SUVA[254]~(aromaticity)), 'terrestrial \n humic-like')
+  lnRR.labels <- c('DOC', 'terrestrial \n humic-like DOM', 'soil \n fulvic-like DOM',
+                   'microbial \n humic-like DOM','protein-like DOM')
   point.size = 1.5
   point.size2 = 1
   point.alpha = .4
@@ -75,6 +86,41 @@
       geom_point(aes(colour = Trophic.position2, shape = Trophic.position2), 
                  size = point.size) +
       theme_classic(base_size = 10)
+  }
+  
+  plot_vol_NP <- function(df, y){
+    ggplot(df, aes(x = AmDOC, y = fitted,
+                         group = pop.density)) +
+      geom_point(data = excr.vol, aes(x = AmDOC, y = y,
+                                  colour = pop.density), 
+                 size = point.size, alpha = point.alpha) +
+      geom_ribbon(aes(ymin = lower, ymax = upper, fill = pop.density),
+                  alpha = .2) +
+      geom_line(aes(colour = pop.density), linewidth = line.size) +
+      geom_hline(yintercept = 0, linetype = 'dashed') +
+      labs(x = expression(DOC~mg~C~L^-1),
+           y = 'lnRR N') +
+      theme_classic(base_size = 10) +
+      scale_color_manual(name = 'Fish density',
+                         labels = c('high', 'low'),
+                         values = c("#dc322f", "#268bd2")) +
+      scale_fill_manual(name = 'Fish density',
+                         labels = c('high', 'low'),
+                         values = c("#dc322f", "#268bd2"))
+  }
+  
+  plot_vol_DOM <- function(df, x){
+    ggplot(df, 
+           aes(x = DOC.level, y = variable)) +
+      labs(x = 'DOC',
+           y = '') +
+      scale_x_discrete(labels = DOC.labels) +
+      scale_y_discrete(labels = lnRR.labels) +
+      geom_tile(aes(fill = value), colour = "white") +
+      theme_bw(base_size = 10) +
+      scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
+                           mid = "#eee8d5", high = "#dc322f", low = "#268bd2") +
+      theme(plot.title = element_text(size = 10))
   }
   
   # Figure 1 ----
@@ -179,9 +225,11 @@
     scale_fill_manual(name = 'DOC',
                        labels = DOC.labels,
                        values = met.brewer('Greek', 3, direction = -1)) +
+    scale_x_discrete(labels = DOM.labels) +
     theme_bw(base_size = 10) +
     theme(axis.title.x = element_text(vjust = -.4),
-          axis.title.y = element_text(vjust = .7))
+          axis.title.y = element_text(vjust = .7),
+          axis.text.x = element_text(angle = 45, hjust = 1.1))
   DOMexcr.p
   
   ggsave('tables_figures/final_tables_figures/Fig3.tiff', 
@@ -232,6 +280,53 @@
             nrow = 3, align = "h", legend = 'none')
   ggsave('tables_figures/final_tables_figures/Fig4.tiff', 
          width = 10, height = 16, 
+         units = 'cm', dpi = 600, compression = 'lzw')
+  
+  # Figure 5 ----
+  lnRRN.p <- plot_vol_NP(gamlnRRN.pred, excr.vol$lnRR.N) +
+    xlab('') +
+    theme(axis.text.x = element_blank()) +
+    annotate("text", x = 7, y = 5.5, 
+             label = 'volumetric excretion above ambient concentration', 
+             size = text.size) +
+    annotate("text", x = 7, y = -3.7, 
+             label = 'volumetric excretion below ambient concentration', 
+             size = text.size) 
+  lnRRN.p
+  
+  lnRRP.p <- plot_vol_NP(gamlnRRP.pred, excr.vol$lnRR.P) +
+    ylab('lnRR P') +
+    annotate("text", x = 7, y = 9.7, 
+             label = 'volumetric excretion above ambient concentration', 
+             size = text.size)
+  lnRRP.p
+  
+  ggarrange(lnRRN.p, lnRRP.p,
+            labels = c("(a)", "(b)"), nrow = 2,
+            font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
+            align = 'v', common.legend = T)
+  ggsave('tables_figures/final_tables_figures/Fig5.tiff', 
+         width = 10, height = 14, 
+         units = 'cm', dpi = 600, compression = 'lzw')
+  
+  # Figure 6 ----
+  lnRR.l.DOM.p <- plot_vol_DOM(excr.vol.lg %>% filter(pop.density == 'l'),
+                               excr.vol.lg$variable) +
+    xlab('') +
+    theme(axis.text.x = element_blank()) +
+    ggtitle('low fish density')
+  lnRR.l.DOM.p
+  
+  lnRR.h.DOM.p <- plot_vol_DOM(excr.vol.lg %>% filter(pop.density == 'h'),
+                               excr.vol.lg$variable) +
+    ggtitle('high fish density')
+  
+  ggarrange(lnRR.l.DOM.p, lnRR.h.DOM.p,
+            labels = c("(a)", "(b)"), nrow = 2,
+            font.label = list(size = 10), label.x = 0.22, label.y = .99, 
+            align = 'v', common.legend = T, legend = 'right')
+  ggsave('tables_figures/final_tables_figures/Fig6_2.tiff', 
+         width = 10, height = 14, 
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S1 ----

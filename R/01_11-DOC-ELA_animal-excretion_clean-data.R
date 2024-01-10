@@ -230,7 +230,7 @@
       starts_with('Am'),-AmC6,-starts_with(c(
         'AmA', 'AmP', 'AmS2', 'Ambi', 'AmS3', 'AmHis', 'AmR'
       )),
-      Area:Part.P
+      Watershed.area:Part.P
     ),
     \(x) mean(x, na.rm = TRUE))) 
   
@@ -263,7 +263,7 @@
                   Trophic.position2 = c('AmL222', 'AmL224', 'AmL239')) %>% 
     rename_DOM() %>% 
     select(
-      -c(C1per:C_microbialper),
+      -c(Watershed.area:C_microbialper),
       -c(DOC, TDP, TDN)
     )
   
@@ -286,7 +286,104 @@
     ) %>%
     bind_rows(excr.amb) %>%
     dplyr::filter(!is.na(C4))
-   
+  
+  # ..simulate fish volumetric excretion ----
+  
+  # summarise PARAFAC excretion for the three lakes have data
+  excr.PARAFAC <- excr.nmds %>% 
+    filter(!Source %in% c('AmL222', 'AmL224', 'AmL239')) %>% 
+    group_by(Site.name) %>% 
+    reframe(across(c(C1:C7), 
+                   \(x) mean(x, na.rm = TRUE)))
+  # Volumetric excretion Ev = (Ea(ug/m2/h) x Area (m2) x Travel time(h))/Volume (m3)
+  # calculating lake volume (x10^4 m3) 
+  # converting lake liters (Area (ha) converted to m2 (*10^4), volume (m3) converted to L (*10^3))
+  # using water residence time (Travel time) eq. (Newbury & Beaty 1980): 
+  # water residence time for average years = (4.3/(watershed area/lake volume))-0.1
+  # using fish # ranging from 2500 to 15,000 fish/ha (Hayhurst et al. 2020)
+  # biomass (g/m2): convert # fish/ha to # fish/m2 (/10^4), multiply by average mass
+  # areal excretion rates Ea (ug/m2/h): biomass x mass-normalized nutrient excretion (ug/g/h)
+  # Area (ha) converted to m2 (*10^4)
+  # l = low fish numbers, h = high fish numbers
+  excr.vol <- excr %>% group_by(Site.name) %>%
+    reframe(across(c(
+      'Mass', 'Watershed.area', 'Area', 'Zmean', 'AmDOC', 'AmTDN', 'AmTDP',
+      AmC1:AmC7, -AmC6, 
+      'massnorm.N.excr', 'massnorm.P.excr', 'massnorm.C.excr'),
+      ~mean(., na.rm = TRUE)
+    )) %>% 
+    left_join(excr.PARAFAC) %>%
+    mutate(
+      lake.vol.e4.m3 = Area * Zmean,
+      lake.vol.L = Area * 10^4 * Zmean * 10^3,
+      area.vol.ratio = Watershed.area / lake.vol.e4.m3,
+      wat.res.time.y = if_else((4.3 / area.vol.ratio) - 0.1 < 0, 0.1, (4.3 / area.vol.ratio) - 0.1),
+      wat.res.time.h = wat.res.time.y * 8760
+    ) %>%
+    slice(rep(1:n(), each = 2)) %>%
+    mutate(
+      pop.density = factor(rep(c("l", "h"), length.out = n())),
+      Site.name = factor(Site.name),
+      vol.Nexcr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h/lake.vol.L
+        ),
+      vol.Pexcr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      vol.Cexcr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      vol.C2excr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*C2*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*C2*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      vol.C4excr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*C4*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*C4*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      vol.C5excr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*C5*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*C5*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      vol.C7excr = if_else(
+        pop.density == 'l',
+        2500/10^4*Mass*C7*Area*10^4*wat.res.time.h/lake.vol.L,
+        15000/10^4*Mass*C7*Area*10^4*wat.res.time.h/lake.vol.L
+      ),
+      lnRR.N = log(vol.Nexcr/AmTDN),
+      lnRR.P = log(vol.Pexcr/AmTDP),
+      lnRR.C = log(vol.Cexcr/AmDOC),
+      lnRR.C2 = log(vol.C2excr/AmC2),
+      lnRR.C4 = log(vol.C4excr/AmC4),
+      lnRR.C5 = log(vol.C5excr/AmC5),
+      lnRR.C7 = log(vol.C7excr/AmC7),
+      DOC.level = factor(case_when(
+        Site.name == 'L224' ~ 'low',
+        Site.name == 'L239' ~ 'med',
+        Site.name == 'L222' ~ 'high',
+        TRUE ~ NA_character_
+      )),
+      DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
+    )
+  
+  # pivot table
+  excr.vol.lg <- excr.vol %>% 
+    select(Site.name, DOC.level, pop.density, lnRR.C:lnRR.C7) %>% 
+    pivot_longer(
+      lnRR.C:lnRR.C7,
+      names_to = 'variable',
+      values_drop_na = TRUE
+    ) 
+    
   # ..summary statistics ----
   excr.ss <- excr %>% 
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',

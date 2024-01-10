@@ -147,6 +147,17 @@
            AIC = round(AIC, digits = 0))
   write_xlsx(AIC.table, 'output/AIC_table.xlsx')
   
+  # lnRR ----
+  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, by = pop.density, m = 2, k = 3, bs = 'tp') +
+                    s(pop.density, bs = 're'), 
+                  method = 'REML', data = excr.vol)
+  lapply(gam.details, function(f) f(gamlnRRN))
+  
+  gamlnRRP <- gam(lnRR.P ~ s(AmDOC, by = pop.density, m = 2, k = 3, bs = 'tp') +
+                    s(pop.density, bs = 're'), 
+                  method = 'REML', data = excr.vol)
+  lapply(gam.details, function(f) f(gamlnRRP))
+  
   # ANOVA ----
   excr.aov <- excr %>%
     filter(!is.na(massnorm.C.excr),
@@ -318,92 +329,10 @@
   disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position2)
   disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position2)
   
-  # simulate fish volumetric excretion ----
-  
-  # summarise PARAFAC excretion for the three lakes have data
-  excr.PARAFAC <- excr.nmds %>% 
-    filter(!Source %in% c('AmL222', 'AmL224', 'AmL239')) %>% 
-    group_by(Site.name) %>% 
-    reframe(across(c(C1:C7), 
-                   \(x) mean(x, na.rm = TRUE)))
-  # Volumetric excretion Ev = (Ea(ug/m2/h) x Area (m2) x Travel time(h))/Volume (m3)
-  # calculating lake volume (x10^4 m3) 
-  # converting lake liters (Area (ha) converted to m2 (*10^4), volume (m3) converted to L (*10^3))
-  # using water residence time (Travel time) eq. (Newbury & Beaty 1980): 
-  # water residence time for average years = (4.3/(watershed area/lake volume))-0.1
-  # using fish # ranging from 2500 to 15,000 fish/ha (Hayhurst et al. 2020)
-  # biomass (g/m2): convert # fish/ha to # fish/m2 (/10^4), multiply by average mass
-  # areal excretion rates Ea (ug/m2/h): biomass x mass-normalized nutrient excretion (ug/g/h)
-  # Area (ha) converted to m2 (*10^4)
-  # l = low fish numbers, h = high fish numbers
-  
-  excr.vol <- excr %>% group_by(Site.name) %>%
-    reframe(across(c(
-      'Mass', 'Watershed.area', 'Area', 'Zmean', 'AmDOC', 'AmTDN', 'AmTDP',
-      AmC1:AmC7, -AmC6,
-      'massnorm.N.excr', 'massnorm.P.excr', 'massnorm.C.excr'),
-      ~mean(., na.rm = TRUE)
-    )) %>% 
-    left_join(excr.PARAFAC) %>%
-    mutate(
-      lake.vol.e4.m3 = Area * Zmean,
-      lake.vol.L = Area * 10^4 * Zmean * 10^3,
-      area.vol.ratio = Watershed.area / lake.vol.e4.m3,
-      wat.res.time.y = if_else((4.3 / area.vol.ratio) - 0.1 < 0, 0.1, (4.3 / area.vol.ratio) - 0.1),
-      wat.res.time.h = wat.res.time.y * 8760,
-      vol.Nexcr.l = (2500/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.Nexcr.h = (15000/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.Pexcr.l = (2500/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.Pexcr.h = (15000/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.Cexcr.l = (2500/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.Cexcr.h = (15000/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C2excr.l = (2500/10^4*Mass*C2*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C2excr.h = (15000/10^4*Mass*C2*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C5excr.l = (2500/10^4*Mass*C5*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C5excr.h = (15000/10^4*Mass*C5*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C7excr.l = (2500/10^4*Mass*C7*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      vol.C7excr.h = (15000/10^4*Mass*C7*Area*10^4*wat.res.time.h)/
-        lake.vol.L,
-      NlnR.l = log(vol.Nexcr.l/AmTDN),
-      NlnR.h = log(vol.Nexcr.h/AmTDN),
-      PlnR.l = log(vol.Pexcr.l/AmTDP),
-      PlnR.h = log(vol.Pexcr.h/AmTDP),
-      ClnR.l = log(vol.Cexcr.l/AmDOC),
-      ClnR.h = log(vol.Cexcr.h/AmDOC),
-      C2lnR.l = log(vol.Cexcr.l/AmC2),
-      C2lnR.h = log(vol.Cexcr.h/AmC2),
-      C5lnR.l = log(vol.Cexcr.l/AmC5),
-      C5lnR.h = log(vol.Cexcr.h/AmC5),
-      C7lnR.l = log(vol.Cexcr.l/AmC7),
-      C7lnR.h = log(vol.Cexcr.h/AmC7)
-    )
-  
-  ggplot(excr.vol, aes(x = AmDOC, y = C7lnR.l)) +
-    geom_point()
-  
-  vol_excr_all <- c("Nexcr.l", "Nexcr.h", "Pexcr.l", "Pexcr.h")
-  for (vol_type in vol_excr_all) {
-    vol_coefficient <- ifelse(grepl(".l", vol_type), 2500, 15000)
-    
-    excr.vol <- excr.vol %>%
-      mutate(
-        !!sym(paste0("vol.", vol_type)) :=
-          (vol_coefficient / 10^4 * Mass * ifelse(grepl("N", vol_type), massnorm.N.excr, massnorm.P.excr) * 
-             Area * 10^4 * wat.res.time.h) / lake.vol.L
-      )
-  }
-  
+ lm.N <- lm(lnRR.N ~ AmDOC, excr.vol)
+ plot(lm.N)
+ summary(lm.N)
+
   # export test result tables ----
   write_csv(tukey.results, "output/DOMexcr_tukey_results.csv")
   write_csv(t.test.results, "output/DOMexcr_ttest_results.csv")
