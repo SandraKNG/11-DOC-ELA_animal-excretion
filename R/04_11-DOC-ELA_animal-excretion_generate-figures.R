@@ -94,7 +94,7 @@
       geom_point(data = excr.vol, aes(x = AmDOC, y = y,
                                   colour = pop.density), 
                  size = point.size, alpha = point.alpha) +
-      geom_ribbon(aes(ymin = lower, ymax = upper, fill = pop.density),
+      geom_ribbon(aes(ymin = lower, ymax = upper, fill = pop.density), 
                   alpha = .2) +
       geom_line(aes(colour = pop.density), linewidth = line.size) +
       geom_hline(yintercept = 0, linetype = 'dashed') +
@@ -103,10 +103,13 @@
       theme_classic(base_size = 10) +
       scale_color_manual(name = 'Fish density',
                          labels = c('high', 'low'),
-                         values = c("#dc322f", "#268bd2")) +
+                         values = c('grey60', 'black')) +
       scale_fill_manual(name = 'Fish density',
                          labels = c('high', 'low'),
-                         values = c("#dc322f", "#268bd2"))
+                        values = c('grey60', 'black')) #+
+      # scale_shape_manual(name = 'Fish density',
+      #                    labels = c('high', 'low'),
+      #                    values = c(16, 17))
   }
   
   plot_vol_DOM <- function(df, x){
