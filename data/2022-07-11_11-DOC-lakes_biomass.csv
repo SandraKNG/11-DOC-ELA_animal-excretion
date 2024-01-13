@@ -1,0 +1,22 @@
+﻿Species.code,fish.numb,data.type,bms.lake,source,notes
+YP,13750,density,222,Hayhurst et al (2020),YP > 50 mm
+YP,1250,density,222,"Hayhurst et al (2020), YP > 50 mm",YP > 50 mm
+YP,2500,density,239,Hayhurst et al (2020),YP > 50 mm
+YP,3500,density,239,"Hayhurst et al (2020), YP > 50 mm",YP > 50 mm
+YP,6,biomass,191,Fedus (2021),YP > 100 mm
+WS,800,abundance,375,Rennie et al. (2019),WS > 100 mm
+WS,700,abundance,375,Rennie et al. (2019),WS > 100 mm
+WS,200,abundance,373,Rennie et al. (2019),WS > 100 mm
+WS,400,abundance,373,Rennie et al. (2019),WS > 100 mm
+WS,24.70588235,biomass,260,Kidd et al. (2014),
+WS,40,biomass,260,Kidd et al. (2014),
+WS,7.647058824,biomass,442,Kidd et al. (2014),
+WS,11,biomass,442,Kidd et al. (2014),
+FM,0.68,biomass,260,Kidd et al. (2014),
+FM,1,biomass,260,Kidd et al. (2014),
+FM,0.64,biomass,442,Kidd et al. (2014),
+FM,0.8,biomass,442,Kidd et al. (2014),
+PD,0.73,biomass,260,Kidd et al. (2014),
+PD,0.52,biomass,260,Kidd et al. (2014),
+PD,0.85,biomass,442,Kidd et al. (2014),
+PD,0.65,biomass,442,Kidd et al. (2014),

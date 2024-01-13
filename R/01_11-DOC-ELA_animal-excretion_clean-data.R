@@ -15,6 +15,9 @@
   str(er)
   head(er)
   
+  bms <- read_csv('data/2022-07-11_11-DOC-lakes_biomass.csv', 
+                  na = c("NA", ""))
+  
   # Clean data, rename and add variables ----
   unique(er$Comments)
   excr <- er %>%
@@ -191,16 +194,74 @@
   
   # ..make excr dataset with one entry for each excretion average ----
   # ..N/P excretion species average ----
+  # calculate pop excretion using different fish number methods 
+  # (abundance (#fish/lake), density (#fish/ha), biomass (kg/ha))
+  # convert existing biomass from kg/ha to g/ha (x 10^3)
+  fish.biomass <- bms %>% 
+    group_by(Species.code, data.type) %>% 
+    reframe(fish.numb = mean(fish.numb, na.rm = T)) %>% 
+    mutate(biomass = (if_else(data.type == 'biomass', fish.numb, NA)) * 10^3)
+  
   excr.sp <- excr %>% 
-    group_by(Site.name, Species.code, AmDOC, DOC.level) %>% 
-    summarise(
+    group_by(Site.name, Species.code, Area, AmDOC, DOC.level) %>% 
+    reframe(
       across(
-        ends_with('excr'), 
-        function(x) median(x, na.rm = TRUE),
+        c(ends_with('excr'), 
+        Mass),
+        function(x) mean(x, na.rm = TRUE),
         .names = "{.col}.sp"
       ),
       n = n()
-      )
+      ) 
+  
+  excr.WS <- excr.sp %>% 
+    filter(Species.code == 'WS') %>% 
+    left_join(fish.biomass %>% filter(data.type == 'abundance')) %>% 
+    mutate(density = fish.numb/Area,
+           biomass = density*Mass.sp)
+  bms.WS <- mean(excr.WS$biomass)
+  
+  excr.YP <- excr.sp %>% 
+    filter(Species.code == 'YP') %>% 
+    left_join(fish.biomass %>% filter(data.type == 'density')) %>% 
+    mutate(biomass = fish.numb*Mass.sp)
+  bms.YP <- mean(excr.YP$biomass)
+  
+  fish.biomass <- fish.biomass %>% 
+    mutate(biomass = case_when(
+      data.type == 'abundance' ~ bms.WS,
+      data.type == 'density' ~ bms.YP,
+      TRUE ~ biomass
+    ))
+  
+  biomass.av <- fish.biomass %>% 
+    group_by(Species.code) %>% 
+    reframe(biomass.sp = mean(biomass))
+  
+  # areal excretion rates Ea (ug/m2/h): biomass (g/m2) x mass-normalized nutrient excretion (ug/g/h)
+  # converting biomass in g/ha to g/m2 to get pop excretion rates in ug/m2/h (/10^4)
+  excr.sp <- excr.sp %>%
+    left_join(biomass.av) %>%
+    mutate(
+      Site.name = factor(Site.name),
+      Pop.N.excr.sp = biomass.sp / 10 ^ 4 * massnorm.N.excr.sp,
+      Pop.P.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.P.excr.sp,
+      Pop.C.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.C.excr.sp,
+      Pop.C2.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.C2.excr.sp,
+      Pop.C4.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.C4.excr.sp,
+      Pop.C5.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.C5.excr.sp,
+      Pop.C7.excr.sp = biomass.sp / 10 ^ 4 *  massnorm.C7.excr.sp
+    )
+  
+  excr.sp.smry <- excr.sp %>% group_by(Site.name) %>% 
+    summarise(Agg.N.excr.sp = sum(Pop.N.excr.sp),
+              Agg.P.excr.sp = sum(Pop.P.excr.sp),
+              Agg.C.excr.sp = sum(Pop.C.excr.sp),
+              Agg.C2.excr.sp = sum(Pop.C2.excr.sp),
+              Agg.C4.excr.sp = sum(Pop.C4.excr.sp),
+              Agg.C5.excr.sp = sum(Pop.C5.excr.sp),
+              Agg.C7.excr.sp = sum(Pop.C7.excr.sp),
+              Total.biomass = sum(biomass.sp))
   
   # ..pivot dataset for DOM excretion only ----
   excr.DOM <- excr.var %>% 
@@ -295,14 +356,13 @@
     group_by(Site.name) %>% 
     reframe(across(c(C1:C7), 
                    \(x) mean(x, na.rm = TRUE)))
+  
   # Volumetric excretion Ev = (Ea(ug/m2/h) x Area (m2) x Travel time(h))/Volume (m3)
   # calculating lake volume (x10^4 m3) 
   # converting lake liters (Area (ha) converted to m2 (*10^4), volume (m3) converted to L (*10^3))
   # using water residence time (Travel time) eq. (Newbury & Beaty 1980): 
   # water residence time for average years = (4.3/(watershed area/lake volume))-0.1
-  # using fish # ranging from 2500 to 15,000 fish/ha (Hayhurst et al. 2020)
   # biomass (g/m2): convert # fish/ha to # fish/m2 (/10^4), multiply by average mass
-  # areal excretion rates Ea (ug/m2/h): biomass x mass-normalized nutrient excretion (ug/g/h)
   # Area (ha) converted to m2 (*10^4)
   # l = low fish numbers, h = high fish numbers
   excr.vol <- excr %>% group_by(Site.name) %>%
@@ -320,45 +380,15 @@
       wat.res.time.y = if_else((4.3 / area.vol.ratio) - 0.1 < 0, 0.1, (4.3 / area.vol.ratio) - 0.1),
       wat.res.time.h = wat.res.time.y * 8760
     ) %>%
-    slice(rep(1:n(), each = 2)) %>%
+    left_join(excr.sp.smry) %>% 
     mutate(
-      pop.density = factor(rep(c("l", "h"), length.out = n())),
-      Site.name = factor(Site.name),
-      vol.Nexcr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*massnorm.N.excr*Area*10^4*wat.res.time.h/lake.vol.L
-        ),
-      vol.Pexcr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*massnorm.P.excr*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
-      vol.Cexcr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*massnorm.C.excr*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
-      vol.C2excr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*C2*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*C2*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
-      vol.C4excr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*C4*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*C4*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
-      vol.C5excr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*C5*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*C5*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
-      vol.C7excr = if_else(
-        pop.density == 'l',
-        2500/10^4*Mass*C7*Area*10^4*wat.res.time.h/lake.vol.L,
-        15000/10^4*Mass*C7*Area*10^4*wat.res.time.h/lake.vol.L
-      ),
+      vol.Nexcr = Agg.N.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.Pexcr = Agg.P.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.Cexcr = Agg.C.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.C2excr = Agg.C2.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.C4excr = Agg.C4.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.C5excr = Agg.C5.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      vol.C7excr = Agg.C7.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
       lnRR.N = log(vol.Nexcr/AmTDN),
       lnRR.P = log(vol.Pexcr/AmTDP),
       lnRR.C = log(vol.Cexcr/AmDOC),
@@ -372,12 +402,15 @@
         Site.name == 'L222' ~ 'high',
         TRUE ~ NA_character_
       )),
-      DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
+      DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high')),
+      Site.name = factor(Site.name)
     )
+  
+  lnRR.P.av <- mean(excr.vol$lnRR.P)
   
   # pivot table
   excr.vol.lg <- excr.vol %>% 
-    select(Site.name, DOC.level, pop.density, lnRR.C:lnRR.C7) %>% 
+    select(Site.name, DOC.level, lnRR.C:lnRR.C7) %>% 
     pivot_longer(
       lnRR.C:lnRR.C7,
       names_to = 'variable',

@@ -8,6 +8,7 @@
   library(MetBrewer) # Met brewer color palette
   library(ggdist) # for stat_halfeye
   library(ggpubr) # for ggarrange function that allows to put all graphs on 1 page
+  library(patchwork) # to arrange plots in one figure
   library(factoextra) # for pca
 
   # Set up prediction data ----
@@ -15,10 +16,9 @@
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                    length = 100),
                                                rep(median(AmDOC), 100)))
-  pred_lnRR_df <- excr.vol %>% tidyr::expand(pop.density,
-                                        AmDOC = c(seq(min(AmDOC), max(AmDOC),
-                                                      length = 100),
-                                                  rep(median(AmDOC), 100)))
+  pred_lnRR_df <- excr.vol %>% tidyr::expand(AmDOC = c(seq(min(AmDOC), max(AmDOC),
+                                                           length = 100),
+                                                       rep(median(AmDOC), 100)))
   
   # Prediction models ----
   gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)
@@ -88,44 +88,6 @@
       theme_classic(base_size = 10)
   }
   
-  plot_vol_NP <- function(df, y){
-    ggplot(df, aes(x = AmDOC, y = fitted,
-                         group = pop.density)) +
-      geom_point(data = excr.vol, aes(x = AmDOC, y = y,
-                                  colour = pop.density), 
-                 size = point.size, alpha = point.alpha) +
-      geom_ribbon(aes(ymin = lower, ymax = upper, fill = pop.density), 
-                  alpha = .2) +
-      geom_line(aes(colour = pop.density), linewidth = line.size) +
-      geom_hline(yintercept = 0, linetype = 'dashed') +
-      labs(x = expression(DOC~mg~C~L^-1),
-           y = 'lnRR N') +
-      theme_classic(base_size = 10) +
-      scale_color_manual(name = 'Fish density',
-                         labels = c('high', 'low'),
-                         values = c('grey60', 'black')) +
-      scale_fill_manual(name = 'Fish density',
-                         labels = c('high', 'low'),
-                        values = c('grey60', 'black')) #+
-      # scale_shape_manual(name = 'Fish density',
-      #                    labels = c('high', 'low'),
-      #                    values = c(16, 17))
-  }
-  
-  plot_vol_DOM <- function(df, x){
-    ggplot(df, 
-           aes(x = DOC.level, y = variable)) +
-      labs(x = 'DOC',
-           y = '') +
-      scale_x_discrete(labels = DOC.labels) +
-      scale_y_discrete(labels = lnRR.labels) +
-      geom_tile(aes(fill = value), colour = "white") +
-      theme_bw(base_size = 10) +
-      scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
-                           mid = "#eee8d5", high = "#dc322f", low = "#268bd2") +
-      theme(plot.title = element_text(size = 10))
-  }
-  
   # Figure 1 ----
   # # N excretion
   NexcrDOC.p <- plot_gam(gamNDOC.pred, excr$massnorm.N.excr) +
@@ -147,10 +109,10 @@
   
   # N:P excretion
   NPexcrDOC.p <- plot_gam(gamNPDOC.pred, log10(excr$massnorm.NP.excr)) +
-    labs(x = expression(DOC~mg~C~L^-1),
+    labs(x = expression(DOC~(mg~C~L^-1)),
          y = expression(atop(Log[10]~'mass-normalized', 
                              paste('N:P excretion (molar)')))) +
-    geom_hline(yintercept = log10(16), linetype = 'dashed', size = line.size) +
+    geom_hline(yintercept = log10(16), linetype = 'dashed', linewidth = line.size) +
     annotate("text", x = 8.7, y = 1.5, label = 'Redfield ratio', size = text.size) +
     scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
   NPexcrDOC.p
@@ -286,51 +248,79 @@
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 5 ----
-  lnRRN.p <- plot_vol_NP(gamlnRRN.pred, excr.vol$lnRR.N) +
-    xlab('') +
-    theme(axis.text.x = element_blank()) +
-    annotate("text", x = 7, y = 5.5, 
-             label = 'volumetric excretion above ambient concentration', 
+  x <- 7.3
+  lnRRN.p <- ggplot(gamlnRRN.pred, aes(x = AmDOC, y = fitted)) +
+    geom_point(data = excr.vol, aes(x = AmDOC, y = lnRR.N), 
+               size = point.size, alpha = point.alpha) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), 
+                alpha = .2) +
+    geom_line(linewidth = line.size) +
+    geom_hline(yintercept = 0, linetype = 'dotted') +
+    labs(x = expression(DOC~(mg~C~L^-1)),
+         y = 'lnRR N') +
+    theme_classic(base_size = 10) +
+    #theme(axis.text.x = element_blank()) +
+    annotate("text", x = x, y = 5,
+             label = 'volumetric excretion above ambient concentration',
              size = text.size) +
-    annotate("text", x = 7, y = -3.7, 
-             label = 'volumetric excretion below ambient concentration', 
-             size = text.size) 
+    annotate("text", x = x, y = -5,
+             label = 'volumetric excretion below ambient concentration',
+             size = text.size)
   lnRRN.p
   
-  lnRRP.p <- plot_vol_NP(gamlnRRP.pred, excr.vol$lnRR.P) +
-    ylab('lnRR P') +
-    annotate("text", x = 7, y = 9.7, 
-             label = 'volumetric excretion above ambient concentration', 
+  lnRRP.p <- ggplot(excr.vol, aes(x = AmDOC, y = lnRR.P)) +
+    geom_point(size = point.size, alpha = point.alpha) +
+    geom_hline(yintercept = lnRR.P.av, linetype = 'longdash') +
+    geom_hline(yintercept = 0, linetype = 'dotted') +
+    labs(x = expression(DOC~(mg~C~L^-1)),
+         y = 'lnRR P') +
+    theme_classic(base_size = 10) +
+    annotate("text", x = x, y = 7,
+             label = 'volumetric excretion above ambient concentration',
+             size = text.size) +
+    annotate("text", x = x, y = -1,
+             label = 'volumetric excretion below ambient concentration',
              size = text.size)
   lnRRP.p
   
-  ggarrange(lnRRN.p, lnRRP.p,
-            labels = c("(a)", "(b)"), nrow = 2,
+  lnRRDOM.p <- ggplot(excr.vol.lg, 
+                      aes(x = DOC.level, y = variable)) +
+    labs(x = 'DOC',
+         y = '') +
+    scale_x_discrete(labels = DOC.labels) +
+    scale_y_discrete(labels = lnRR.labels) +
+    geom_tile(aes(fill = value), colour = "white") +
+    theme_bw(base_size = 10) +
+    #theme(legend.position = 'bottom') +
+    scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
+                         mid = "#eee8d5", high = "#dc322f", low = "#268bd2") +
+    theme(plot.title = element_text(size = 10, face = 'bold')) +
+    ggtitle("(c)")
+  lnRRDOM.p
+  
+  
+  lnRRNP.p <- ggarrange(
+    lnRRN.p,
+    lnRRP.p,
+    labels = c("(a)", "(b)"),
+    ncol = 2,
+    font.label = list(size = 10),
+    label.x = 0.14,
+    label.y = 1.01,
+    align = 'v'
+  )
+  lnRRNP.p
+  
+  ggarrange(lnRRNP.p, lnRRDOM.p, #lnRRP.p,
+            nrow = 2, ncol = 1,
             font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
-            align = 'v', common.legend = T)
+            align = 'v', heights = c(1.2, 1))
+  
+  #(lnRRN.p/lnRRP.p)|lnRRDOM.p + plot_annotation(tag_levels = "a")
+  
   ggsave('tables_figures/final_tables_figures/Fig5.tiff', 
-         width = 10, height = 14, 
-         units = 'cm', dpi = 600, compression = 'lzw')
-  
-  # Figure 6 ----
-  lnRR.l.DOM.p <- plot_vol_DOM(excr.vol.lg %>% filter(pop.density == 'l'),
-                               excr.vol.lg$variable) +
-    xlab('') +
-    theme(axis.text.x = element_blank()) +
-    ggtitle('low fish density')
-  lnRR.l.DOM.p
-  
-  lnRR.h.DOM.p <- plot_vol_DOM(excr.vol.lg %>% filter(pop.density == 'h'),
-                               excr.vol.lg$variable) +
-    ggtitle('high fish density')
-  
-  ggarrange(lnRR.l.DOM.p, lnRR.h.DOM.p,
-            labels = c("(a)", "(b)"), nrow = 2,
-            font.label = list(size = 10), label.x = 0.22, label.y = .99, 
-            align = 'v', common.legend = T, legend = 'right')
-  ggsave('tables_figures/final_tables_figures/Fig6_2.tiff', 
-         width = 10, height = 14, 
-         units = 'cm', dpi = 600, compression = 'lzw')
+         width = 10, height = 9, bg = 'white',
+         units = 'cm', dpi = 600, compression = 'lzw', scale = 1.7)
   
   # Figure S1 ----
   pca.all.p <- fviz_pca_biplot(pca.all,
@@ -378,6 +368,7 @@
   
   # export final tables ----
   write_csv(excr, "output/excr_final.csv")
+  write_csv(excr.vol, "output/excr_vol_final.csv")
   write_csv(excr.ss, "output/excr_summary.csv")
   write_csv(excrtp.ss, "output/excr_summary_site_tp.csv")
   write_csv(excrDOM.ss, "output/DOMexcr_summary.csv")

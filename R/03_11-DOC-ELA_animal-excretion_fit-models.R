@@ -65,8 +65,8 @@
   
   hgam <- function(y, k1) {
     mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're') +
-                 s(Site.name, bs = 're'),
+                 s(Trophic.position2, bs = 're'), #+
+                 #s(Site.name, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
@@ -148,13 +148,11 @@
   write_xlsx(AIC.table, 'output/AIC_table.xlsx')
   
   # lnRR ----
-  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, by = pop.density, m = 2, k = 3, bs = 'tp') +
-                    s(pop.density, bs = 're'), 
+  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, k = 7, bs = 'tp'), 
                   method = 'REML', data = excr.vol)
   lapply(gam.details, function(f) f(gamlnRRN))
   
-  gamlnRRP <- gam(lnRR.P ~ s(AmDOC, by = pop.density, m = 2, k = 3, bs = 'tp') +
-                    s(pop.density, bs = 're'), 
+  gamlnRRP <- gam(lnRR.P ~ s(AmDOC,k = 3, bs = 'tp'),
                   method = 'REML', data = excr.vol)
   lapply(gam.details, function(f) f(gamlnRRP))
   
