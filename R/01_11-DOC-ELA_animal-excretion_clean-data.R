@@ -435,6 +435,6 @@
     describe_distribution()
   
   lake.ss <- excr.pca %>% 
-    select(c('Area', 'Zmean')) %>% 
+    select(c('Area', 'Zmean', 'AmTDP', 'AmTDN', 'Epi.chla')) %>% 
     describe_distribution()
   

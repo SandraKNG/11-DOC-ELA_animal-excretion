@@ -118,11 +118,10 @@
   # DOC
   gamNDOC <- hgam(excr$massnorm.N.excr, 6)
   lapply(gam.details, function(f) f(gamNDOC))
-  concurvity(test)
   gamN.null <- hgam_null(excr$massnorm.N.excr)
-  summary(gamN.lake)
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
-  
+  summary(gamN.lake)
+   
   # ...P excretion ----
   # DOC
   gamPDOC <- hgam(excr$massnorm.P.excr, 5)
@@ -137,24 +136,34 @@
   gamNP.null <- hgam_null_log(excr$massnorm.NP.excr)
   gamNP.lake <- hgam_lake_log(excr$massnorm.NP.excr)
   
+  # Individual dry mass
+  # gamBMDOC <- hgam(excr$Mass, 5)
+  # lapply(gam.details, function(f) f(gamBMDOC))
+  
+  # lnRR ----
+  # N
+  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, k = 7, bs = 'tp'), 
+                  method = 'REML', data = excr.vol)
+  lapply(gam.details, function(f) f(gamlnRRN))
+  gamlnRRN.null <- gam(lnRR.N ~ 1, method = 'REML', data = excr.vol)
+  
+  # P
+  gamlnRRP <- gam(lnRR.P ~ s(AmDOC,k = 3, bs = 'tp'),
+                  method = 'REML', data = excr.vol)
+  lapply(gam.details, function(f) f(gamlnRRP))
+  gamlnRRP.null <- gam(lnRR.P ~ 1, method = 'REML', data = excr.vol)
+  
   # make AIC table
   AIC.tbl <- AIC(gamNDOC, gamN.lake, gamN.null,  
                  gamPDOC, gamP.lake, gamP.null,
-                 gamNPDOC, gamNP.lake, gamNP.null)
+                 gamNPDOC, gamNP.lake, gamNP.null,
+                 gamlnRRN, gamlnRRN.null,
+                 gamlnRRP, gamlnRRP.null)
   
   AIC.table <- AIC.tbl %>%  rownames_to_column(var = "Model") %>%
     mutate(df = round(df, digits = 0),
            AIC = round(AIC, digits = 0))
   write_xlsx(AIC.table, 'output/AIC_table.xlsx')
-  
-  # lnRR ----
-  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, k = 7, bs = 'tp'), 
-                  method = 'REML', data = excr.vol)
-  lapply(gam.details, function(f) f(gamlnRRN))
-  
-  gamlnRRP <- gam(lnRR.P ~ s(AmDOC,k = 3, bs = 'tp'),
-                  method = 'REML', data = excr.vol)
-  lapply(gam.details, function(f) f(gamlnRRP))
   
   # ANOVA ----
   excr.aov <- excr %>%

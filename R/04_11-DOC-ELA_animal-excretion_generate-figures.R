@@ -43,6 +43,7 @@
   point.alpha = .4
   line.size = 0.5
   text.size = 3
+  x = 7.3
   
   # create plotting functions
   plot_gam <- function(df, y) {
@@ -57,6 +58,7 @@
       guides(colour = guide_legend(
         override.aes = list(size = point.size + .5)
         )) +
+      scale_x_continuous(n.breaks = 6) +
       scale_color_manual(name = 'Trophic position',
                          labels = Trophic.labels,
                          values = c("#dd5129",  "#43b284")) +
@@ -93,18 +95,16 @@
   NexcrDOC.p <- plot_gam(gamNDOC.pred, excr$massnorm.N.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(N~excretion~(μg~N~g^-1~h^-1))))) +
-    theme(axis.text.x = element_blank()) +
-    scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
+                             paste(N~excretion~(μg~N~g^-1~h^-1))))) #+
+    #theme(axis.text.x = element_blank())
   NexcrDOC.p
   
   # P excretion
   PexcrDOC.p <- plot_gam(gamPDOC.pred, excr$massnorm.P.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(P~excretion~(μg~P~g^-1~h^-1))))) +
-    theme(axis.text.x = element_blank()) +
-    scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
+                             paste(P~excretion~(μg~P~g^-1~h^-1))))) #+
+    #theme(axis.text.x = element_blank()) 
   PexcrDOC.p
   
   # N:P excretion
@@ -113,8 +113,7 @@
          y = expression(atop(Log[10]~'mass-normalized', 
                              paste('N:P excretion (molar)')))) +
     geom_hline(yintercept = log10(16), linetype = 'dashed', linewidth = line.size) +
-    annotate("text", x = 8.7, y = 1.5, label = 'Redfield ratio', size = text.size) +
-    scale_x_continuous(breaks = c(3, 5, 7, 9, 11))
+    annotate("text", x = 8.7, y = 1.5, label = 'Redfield ratio', size = text.size) 
   NPexcrDOC.p
   
   
@@ -123,7 +122,7 @@
             PexcrDOC.p, 
             NPexcrDOC.p, 
             label.x = 0.2, label.y = 1,
-            nrow = 3, ncol = 1, align = 'hv', heights = 1,
+            nrow = 3, ncol = 1, align = 'v',
             common.legend = T,
             labels = c('(a)', '(b)', '(c)'),
             font.label = list(size = 10))
@@ -248,7 +247,6 @@
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 5 ----
-  x <- 7.3
   lnRRN.p <- ggplot(gamlnRRN.pred, aes(x = AmDOC, y = fitted)) +
     geom_point(data = excr.vol, aes(x = AmDOC, y = lnRR.N), 
                size = point.size, alpha = point.alpha) +
@@ -259,7 +257,7 @@
     labs(x = expression(DOC~(mg~C~L^-1)),
          y = 'lnRR N') +
     theme_classic(base_size = 10) +
-    #theme(axis.text.x = element_blank()) +
+    scale_x_continuous(n.breaks = 6) +
     annotate("text", x = x, y = 5,
              label = 'volumetric excretion above ambient concentration',
              size = text.size) +
@@ -275,6 +273,7 @@
     labs(x = expression(DOC~(mg~C~L^-1)),
          y = 'lnRR P') +
     theme_classic(base_size = 10) +
+    scale_x_continuous(n.breaks = 6) +
     annotate("text", x = x, y = 7,
              label = 'volumetric excretion above ambient concentration',
              size = text.size) +
@@ -311,7 +310,7 @@
   )
   lnRRNP.p
   
-  ggarrange(lnRRNP.p, lnRRDOM.p, #lnRRP.p,
+  ggarrange(lnRRNP.p, lnRRDOM.p, 
             nrow = 2, ncol = 1,
             font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
             align = 'v', heights = c(1.2, 1))
