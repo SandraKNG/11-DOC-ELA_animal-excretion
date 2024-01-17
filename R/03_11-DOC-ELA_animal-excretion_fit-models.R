@@ -140,7 +140,7 @@
   # gamBMDOC <- hgam(excr$Mass, 5)
   # lapply(gam.details, function(f) f(gamBMDOC))
   
-  # lnRR ----
+  # ...lnRR ----
   # N
   gamlnRRN <- gam(lnRR.N ~ s(AmDOC, k = 7, bs = 'tp'), 
                   method = 'REML', data = excr.vol)
@@ -335,10 +335,6 @@
   disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position2)
   disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position2)
   disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position2)
-  
- lm.N <- lm(lnRR.N ~ AmDOC, excr.vol)
- plot(lm.N)
- summary(lm.N)
 
   # export test result tables ----
   write_csv(tukey.results, "output/DOMexcr_tukey_results.csv")

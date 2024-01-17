@@ -33,11 +33,11 @@
   Species.labels <- c('fathead minnow', 'pearl dace', 
                       'white sucker', 'yellow perch')
   DOC.labels <- c('low', 'medium', 'high')
-  DOM.labels <- c('terrestrial \n humic-like', 'SR (molecular size)', 'β:α (freshness)', 'HIX (humic)', 
-                  'ubiquitous \n humic-like','soil \n fulvic-like', 'protein-like', 
-                  'micrboial \n humic-like','FI (source)', expression(SUVA[254]~(aromaticity)), 'terrestrial \n humic-like')
-  lnRR.labels <- c('DOC', 'terrestrial \n humic-like DOM', 'soil \n fulvic-like DOM',
-                   'microbial \n humic-like DOM','protein-like DOM')
+  DOM.labels <- c('C2 (terrestrial \n humic-like)', 'SR (molecular size)', 'β:α (freshness)', 'HIX (humic)', 
+                  'C1 (ubiquitous \n humic-like)','C4 (soil \n fulvic-like)', 'C7 (protein-like)', 
+                  'C5 (microbial \n humic-like)','FI (source)', expression(SUVA[254]~(aromaticity)), 'C3 (terrestrial \n humic-like)')
+  lnRR.labels <- c('DOC', 'C2 (terrestrial \n humic-like DOM)', 'C4 (soil \n fulvic-like DOM)',
+                   'C5 (microbial \n humic-like DOM)','C7 (protein-like DOM)')
   point.size = 1.5
   point.size2 = 1
   point.alpha = .4
@@ -198,7 +198,7 @@
   
   ggsave('tables_figures/final_tables_figures/Fig3.tiff', 
          width = 7, height = 5, 
-         units = 'in', dpi = 600, compression = 'lzw')
+         units = 'in', dpi = 600, compression = 'lzw', scale = .9)
   
   # Figure 4 ----
   # ...low DOC ----
@@ -254,10 +254,11 @@
                 alpha = .2) +
     geom_line(linewidth = line.size) +
     geom_hline(yintercept = 0, linetype = 'dotted') +
-    labs(x = expression(DOC~(mg~C~L^-1)),
+    labs(x = '',
          y = 'lnRR N') +
     theme_classic(base_size = 10) +
     scale_x_continuous(n.breaks = 6) +
+    theme(axis.text.x = element_blank()) +
     annotate("text", x = x, y = 5,
              label = 'volumetric excretion above ambient concentration',
              size = text.size) +
@@ -282,6 +283,23 @@
              size = text.size)
   lnRRP.p
   
+  # combine plots
+  ggarrange(
+    lnRRN.p,
+    lnRRP.p,
+    labels = c("(a)", "(b)"),
+    nrow = 2,
+    font.label = list(size = 10),
+    label.x = 0.14,
+    label.y = 1.01,
+    align = 'v'
+  )
+  
+  ggsave('tables_figures/final_tables_figures/Fig5.tiff', 
+         width = 9.5, height = 13, bg = 'white',
+         units = 'cm', dpi = 600, compression = 'lzw')
+  
+  # Figure 6 ----
   lnRRDOM.p <- ggplot(excr.vol.lg, 
                       aes(x = DOC.level, y = variable)) +
     labs(x = 'DOC',
@@ -293,33 +311,20 @@
     #theme(legend.position = 'bottom') +
     scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
                          mid = "#eee8d5", high = "#dc322f", low = "#268bd2") +
-    theme(plot.title = element_text(size = 10, face = 'bold')) +
-    ggtitle("(c)")
+    theme(plot.title = element_text(size = 10, face = 'bold')) #+
+    #ggtitle("(c)")
   lnRRDOM.p
   
-  
-  lnRRNP.p <- ggarrange(
-    lnRRN.p,
-    lnRRP.p,
-    labels = c("(a)", "(b)"),
-    ncol = 2,
-    font.label = list(size = 10),
-    label.x = 0.14,
-    label.y = 1.01,
-    align = 'v'
-  )
-  lnRRNP.p
-  
-  ggarrange(lnRRNP.p, lnRRDOM.p, 
-            nrow = 2, ncol = 1,
-            font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
-            align = 'v', heights = c(1.2, 1))
+  # ggarrange(lnRRNP.p, lnRRDOM.p, 
+  #           nrow = 2, ncol = 1,
+  #           font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
+  #           align = 'v', heights = c(1.2, 1))
   
   #(lnRRN.p/lnRRP.p)|lnRRDOM.p + plot_annotation(tag_levels = "a")
   
-  ggsave('tables_figures/final_tables_figures/Fig5.tiff', 
-         width = 10, height = 9, bg = 'white',
-         units = 'cm', dpi = 600, compression = 'lzw', scale = 1.7)
+  ggsave('tables_figures/final_tables_figures/Fig6.tiff', 
+         width = 12, height = 9, bg = 'white',
+         units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S1 ----
   pca.all.p <- fviz_pca_biplot(pca.all,
