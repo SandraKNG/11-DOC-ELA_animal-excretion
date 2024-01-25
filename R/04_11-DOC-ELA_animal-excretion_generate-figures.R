@@ -177,7 +177,7 @@
   # Figure 3 ----
   DOMexcr.p <- ggplot(excr.DOM, aes(x = type, y = massnorm.excr)) +
     geom_boxplot(outlier.shape = NA, linewidth = line.size) +
-    geom_jitter(aes(colour = DOC.level, fill = DOC.level, shape = Trophic.position2), shape = 21, 
+    geom_jitter(aes(colour = DOC.level, fill = DOC.level),#, shape = Trophic.position2),  
                 size = point.size, stroke = .25, alpha = .6, width = .25) +
     labs(x = 'DOM optical parameters',
          y = expression(Mass-normalized~excretion~rates~(g^-1~h^-1))) +
@@ -189,6 +189,9 @@
     scale_fill_manual(name = 'DOC',
                        labels = DOC.labels,
                        values = met.brewer('Greek', 3, direction = -1)) +
+    # scale_shape_manual(name = 'Trophic position',
+    #                    labels = Trophic.labels,
+    #                    values = c(21, 24)) +
     scale_x_discrete(labels = DOM.labels) +
     theme_bw(base_size = 10) +
     theme(axis.title.x = element_text(vjust = -.4),
@@ -310,7 +313,7 @@
     theme_bw(base_size = 10) +
     #theme(legend.position = 'bottom') +
     scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
-                         mid = "#eee8d5", high = "#dc322f", low = "#268bd2") +
+                         mid = "#eee8d5", low = "#dc322f", high = "#268bd2") +
     theme(plot.title = element_text(size = 10, face = 'bold')) #+
     #ggtitle("(c)")
   lnRRDOM.p
@@ -354,7 +357,8 @@
     ylim(-3,3) +
     labs(x = 'PC1 (75.2%)',
          y = 'PC2 (13%)') +
-    scale_colour_gradient2(name = "DOC \n(mg C/L)", high = "#3c0d03")
+    scale_colour_gradient2(name = expression(atop(DOC,
+                                                    paste((mg~C~L^-1)))), high = "#3c0d03")
   pca.DOM.p
   
   ggsave('tables_figures/final_tables_figures/FigS2.tiff', 

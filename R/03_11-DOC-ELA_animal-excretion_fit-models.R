@@ -53,6 +53,7 @@
   cor.test(excr.pca$AmDOC, excr.pca$PC1)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
+  cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
   
   # correlation matrix
   excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
@@ -170,7 +171,7 @@
     filter(!is.na(massnorm.C.excr),
                               massnorm.C.excr < 32.56) 
   aov_DOCM <- function(x) {
-    m <- aov(log10(x)~ DOC.level, data = excr.aov)
+    m <- lm(log10(x)~ DOC.level, data = excr.aov)
     print(summary(m))
     return(m)
   }
