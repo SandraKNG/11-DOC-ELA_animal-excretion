@@ -256,7 +256,7 @@
     geom_ribbon(aes(ymin = lower, ymax = upper), 
                 alpha = .2) +
     geom_line(linewidth = line.size) +
-    geom_hline(yintercept = 0, linetype = 'dotted') +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     labs(x = '',
          y = 'lnRR N') +
     theme_classic(base_size = 10) +
@@ -272,8 +272,8 @@
   
   lnRRP.p <- ggplot(excr.vol, aes(x = AmDOC, y = lnRR.P)) +
     geom_point(size = point.size, alpha = point.alpha) +
-    geom_hline(yintercept = lnRR.P.av, linetype = 'longdash') +
-    geom_hline(yintercept = 0, linetype = 'dotted') +
+    #geom_hline(yintercept = lnRR.P.av, linetype = 'longdash') +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     labs(x = expression(DOC~(mg~C~L^-1)),
          y = 'lnRR P') +
     theme_classic(base_size = 10) +
