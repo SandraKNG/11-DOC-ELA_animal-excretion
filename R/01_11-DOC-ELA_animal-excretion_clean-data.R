@@ -200,7 +200,8 @@
   fish.biomass <- bms %>% 
     group_by(Species.code, data.type) %>% 
     reframe(fish.numb = mean(fish.numb, na.rm = T)) %>% 
-    mutate(biomass = (if_else(data.type == 'biomass', fish.numb, NA)) * 10^3)
+    mutate(biomass_w = (if_else(data.type == 'biomass', fish.numb, NA)) * 10^3,
+           biomass = biomass_w * 0.25)  
   
   excr.sp <- excr %>% 
     group_by(Site.name, Species.code, Area, AmDOC, DOC.level) %>% 
@@ -364,7 +365,6 @@
   # water residence time for average years = (4.3/(watershed area/lake volume))-0.1
   # biomass (g/m2): convert # fish/ha to # fish/m2 (/10^4), multiply by average mass
   # Area (ha) converted to m2 (*10^4)
-  # l = low fish numbers, h = high fish numbers
   excr.vol <- excr %>% group_by(Site.name) %>%
     reframe(across(c(
       'Mass', 'Watershed.area', 'Area', 'Zmean', 'AmDOC', 'AmTDN', 'AmTDP',
@@ -381,14 +381,21 @@
       wat.res.time.h = wat.res.time.y * 8760
     ) %>%
     left_join(excr.sp.smry) %>% 
+    left_join(vol_wgt_tdn_tdp_doc, by = 'Site.name') %>% 
     mutate(
-      vol.Nexcr = Agg.N.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.Pexcr = Agg.P.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.Cexcr = Agg.C.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.C2excr = Agg.C2.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.C4excr = Agg.C4.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.C5excr = Agg.C5.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
-      vol.C7excr = Agg.C7.excr.sp*Area*10^4*wat.res.time.h/lake.vol.L,
+      surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
+      surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
+      surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,
+      prop.Nexcr = surf.Nexcr_d / tot_TDN * 100,
+      prop.Pexcr = surf.Pexcr_d / tot_TDP * 100,
+      prop.Cexcr = surf.Cexcr_d / tot_DOC * 100,
+      vol.Nexcr = Agg.N.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.Pexcr = Agg.P.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.Cexcr = Agg.C.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.C2excr = Agg.C2.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.C4excr = Agg.C4.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.C5excr = Agg.C5.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      vol.C7excr = Agg.C7.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L, 
       lnRR.N = log(vol.Nexcr/AmTDN),
       lnRR.P = log(vol.Pexcr/AmTDP),
       lnRR.C = log(vol.Cexcr/AmDOC),

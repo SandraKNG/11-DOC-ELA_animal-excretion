@@ -1,0 +1,446 @@
+---
+title: "Volume-weighted_whole-lake_chemistry without water level changes"
+author: "Mike Paterson"
+date: "31/12/2020"
+output: 
+  html_document:
+    number_sections: true
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Whole-lake volume weighted chemistry 
+
+Whole-lake integrated chemistry for long term data.  This file does not incorporate changes in water levels.  See Volume-weighted whole-lake chemistry files.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(here)
+library(gt)
+library(broom)
+library(zoo)
+library(rLakeAnalyzer)
+library(patchwork)
+```
+# Data files
+
+To use this file with different lakes, search and replace the lake number
+
+To convert among lakes, do a search and replace for "239" (except in the section headed "weird points").
+
+all_lake_chem_ela.csv is chemistry data for ELA reference lakes. Experimental lakes and 114 are not up to date in this file.)
+
+bathymetry_all.csv is a file with bathymetry from ELA lakes.
+
+gauge_reading.csv is a file with datum elevations for water level readings in each lake. This file is not needed if you are using the "no_water_level" script
+
+water_level.csv are water level gauge readings.  In many lakes, there are no gauge readings for some years and so lake levels were assumed to be at the datum level. This file is not needed if you are using the "no_water_level" script
+
+F_ice_day_2.csv is a file with ice-off and ice-on dates for L239, used to calculate average temperatures for the ice-free season.
+
+```{r, message=FALSE, warning=FALSE}
+lake_chem_1968_2022 <- read_csv(here("data/all_lake_chem_ela_no_meta_avgs_Sherry_Sandra.csv"),guess_max = 10000)
+ice_day <- read_csv(here("data/F_ice_day_2.csv"), guess_max = 10000)
+bathymetry_all <- read_csv(here("data/bathymetry_all.csv"), guess_max = 10000)
+# water_level <- read_csv(here("data_files", "L239_water_level.csv"), guess_max = 10000)
+# gauge_depth <- read_csv(here("data_files", "gauge_reading.csv"))
+# water_level$date <- as_date(water_level$date,"Ymd")
+ice_day$off_date <- as_date(ice_day$off_date,"Ymd")
+ice_day$on_date <- as_date(ice_day$on_date,"Ymd")
+```
+Various file manipulations
+```{r, message=FALSE}
+
+bathy <- bathymetry_all %>%
+filter(lake == 222) %>%
+  rename(depth = bdepth)
+
+# filter the chemistry data for the target lake, epi, and profiles
+
+# remove any weird points
+
+lake_chem_1968_2022 <- lake_chem_1968_2022 %>%
+  mutate(ca = if_else((lake == "224" & date == "1983-08-22" & start_d == 20), NA_real_, ca))
+
+big_chem_222 <- lake_chem_1968_2022 %>%
+  filter(lake == "222") %>%
+  filter(subloc == "LA") %>%
+  filter(stn == "CB") %>% 
+  filter(year >= 2000)
+
+# calculate TP, TN, suspended C:P
+
+big_chem_222 <- big_chem_222 %>% 
+  mutate(tp = tdp + suspp, tn = tdn + suspn) %>%  # calculate TP, TN, C:P
+  mutate(suspCP = suspc / suspp)
+```
+# Bathymetry
+
+The bathymetry file was combined with a file of lake depths at 0.1m intervals.  Lake areas at depths between those included in the bathymetric file (1-2m intervals) were linearly interpolated using the zoo::na.approx function.  This was to allow finer resolution for changes in water level than could be obtained using the standard bathymetric files based on 1-2m intervals.
+
+```{r, message=FALSE, warning=FALSE}
+# create a file of depths at 0.1m intervals to the maximum depth
+
+max_area <- max(bathy$area_ha)
+maxd <- round(max(bathy$depth), 1)
+# datum <- gauge_depth$L222
+depths_point_1 <- seq(0, maxd, by = 0.1)
+depths_point_1 <- as_tibble(depths_point_1)
+depths_point_1 <- depths_point_1 %>%
+  rename(depth = value)
+
+# join with bathymetry data
+
+combined_depths <- left_join(depths_point_1, bathy)
+  combined_depths <- combined_depths %>% 
+  select (depth, area_ha) %>%
+  mutate(area_ha = if_else(depth == maxd, 0, area_ha)) %>%  
+  mutate(int_area = na.approx(area_ha))  # interpolation between depths with area data
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+# calculate the volumes of 0.1m depth slices
+
+new_bathy_combined <- combined_depths
+new_bathy_combined$vol_m3 <- NA
+for (i in 1:length(new_bathy_combined$depth)){
+  new_bathy_combined$vol_m3[i] <- ((((new_bathy_combined$depth[i + 1]-new_bathy_combined$depth[i])/3) * (new_bathy_combined$int_area[i + 1] + new_bathy_combined$int_area[i] + sqrt(new_bathy_combined$int_area[i+1] * new_bathy_combined$int_area[i]))) * 10000)
+}
+```
+
+# Water levels
+
+This chunk is not used for the "no_water_level" scripts, except for the first line
+
+First, a file was created with one-day intervals between the first day of gauge readings and the last.  Water levels were then linearly interpolated between dates to ensure that there was a water level to match with every chemistry profile. Dates prior to the first and after the last date in the water level file were assumed to be at datum (correction made further below). For days with gauge readings, water levels were then adjusted to datum.  
+
+```{r, message=FALSE, warning=FALSE}
+
+# next line is for the "no_water_level" scripts only
+
+relative_level <- 0
+
+# create a file with days between the first and last date on the water level file for interpolation of water levels. Not used for "no_water_level" scripts
+
+# length <- length(water_level$date)
+# length <- difftime(water_level$date[1], water_level$date[length],units = c("days"))
+# dates <- seq(water_level$date[1], by = "1 day", length.out = ((length * -1)+1))
+# dates <- as_tibble(dates)
+# dates <- dates %>%
+#   rename(date = value)
+# dates$date <- as_date(dates$date,"Ymd")
+# water_level <- left_join(dates, water_level)
+# water_level <- water_level %>%
+#   mutate(int_level = na.approx(mean_daily_level)) # linearly interpolate water levels
+# 
+# water_level <- water_level %>%
+#   select(date, int_level)%>%
+#   mutate(relative_level = round((int_level - datum), digits=1))      # daily level relative to datum
+```
+# Interpolating chemistry at 0.1m intervals in the profiles for determination of whole-lake integrated chemistry averages (volume-weighted chemistry)
+
+Chemistry data were linked to the interpolated bathymetric map data.  Since the depths of all chemistry samples were recorded relative to the surface on the day of sampling, they need to be "repositioned" on the bathymetric map to account for daily variations in water level.  This is needed to determine the appropriate strata volumes for use in volume-weighted chemistry calculations and for determinations of lake volume. 
+
+```{r, message=FALSE, warning=FALSE}
+big_chem_222_pivot <- big_chem_222 %>%
+ # select(c(-depth)) %>%
+  rename(depth = start_d) %>%
+  pivot_longer(cols = c(-lake, -subloc, -stn, -date, -year, -month, -month_name, -jd, -depth, -strat_layer), names_to = "parameter", values_to = "measure")
+
+big_chem_222_pivot <- big_chem_222_pivot %>%
+  group_by(date, depth, parameter) %>%
+  summarize(measure = mean(measure, na.rm = TRUE)) %>% # average multiple readings made on the same day (isn't necessary if using sample averages already, but doesn't hurt)
+  mutate(depth = round(depth, digits = 1)) %>%    # round depth data to 0.1m depth intervals to match the bathymetry file
+  ungroup() %>%
+  group_by(date, parameter) %>%
+  filter(!is.na(length(measure) > 3)) # limit analyses to dates with at least 4 measures at different depths
+
+chem_wide <- big_chem_222_pivot %>%     # pivot to allow a join with the depth data
+  pivot_wider(names_from = date, values_from = measure)
+  
+chem_point_1 <- left_join(depths_point_1, chem_wide, by = "depth")
+
+chem_fine <- chem_point_1 %>% # create a file with chemistry at 0.1m intervals
+  pivot_longer(cols = c(-depth, -parameter), names_to = "date", values_to = "measure") %>%
+  pivot_wider(names_from = parameter, values_from = measure) %>%
+  pivot_longer(cols = c(-date, -depth), names_to = "parameter", values_to = "measure")
+chem_fine$date <- as_date(chem_fine$date,"Ymd")
+
+# chemistry data are combined with water level data
+# chem_fine <- left_join(chem_fine, water_level) %>% # This line is for scripts that adjust for water level.
+chem_fine <- chem_fine %>% # only for no_water_level" scripts
+# the relative level was the daily water level relative to the datum when the bathymetric map was created. This does not apply for "no_water_level" scripts
+   mutate(relative_level = replace_na(relative_level, 0)) %>% 
+# depth_bathy is the depth of a chemistry measure scaled to the bathymetric map. Water levels were assumed to be at  datum, if there were no water level data.
+   mutate(depth_bathy = depth - relative_level) %>% 
+   mutate(depth_bathy = round(depth_bathy, digits=1))
+
+new_bathy_combined <- new_bathy_combined %>%
+  rename(depth_bathy = depth)%>% # rename depth to depth_bathy
+  select(depth_bathy, vol_m3) %>%
+  mutate(depth_bathy = round(depth_bathy, digits=1))
+
+chem_fine <- left_join(chem_fine, new_bathy_combined, by = "depth_bathy") %>%
+  mutate(vol_m3 = if_else(depth_bathy < 0, (max_area * 0.1), vol_m3)) %>% 
+# Occasionally, water levels were above datum.  Lake volumes were increased by (lake surface area * 0.1 m) for each 0.1m above datum.This does not apply for "no_water_level" scripts
+  mutate(vol_m3 = if_else(is.na(vol_m3), 0, vol_m3)) 
+
+# when "shifting" depths related to drops in water level, the maximum depths will exceed the maximum_depth on the bathymetric map and no volume is assigned to them (because they don't actually exist). To facilitate the math for interpolations, NA values are reset to zero.
+
+# for interpolations, each data set needs to start at 0m and end at the maximum depth. Where data were missing for the start and end depths, I set the value at the lake bottom to the average for depths 5m above the maximum depth on the day of sampling.  If measures were missing at 0m (which was rare), it was set to the average for measures from <3m on that sampling day.
+
+chem_fine <- chem_fine %>%
+  mutate(shallow = if_else(depth <=3, 1, 0)) %>%
+  mutate(deep = if_else(depth >= (maxd - 5), 1, 0))
+
+chem_fine <- chem_fine %>%
+  mutate(shallow_measures = shallow * measure) %>%  
+# flag for average shallow chemistry to replace 0 depth value if necessary (see below)
+  mutate(shallow_measures = if_else(shallow_measures == 0, NA_real_, shallow_measures))%>% 
+# replace 0 values with NA for calculations of average shallow chemistry to replace 0 depth value if necessary
+  mutate(deep_measures = deep * measure) %>% # repeat for deep samples
+  mutate(deep_measures = if_else(deep_measures == 0, NA_real_, deep_measures))%>%
+  group_by(date, parameter) %>%
+  mutate(shallow_avg = mean(shallow_measures, na.rm = TRUE)) %>%
+  mutate(deep_avg = mean(deep_measures, na.rm = TRUE))       
+  
+new_chem <- chem_fine %>%
+  mutate(measure = if_else((is.na(measure) & depth == 0), shallow_avg, measure)) %>%
+  mutate(measure = if_else((is.na(measure) & depth == maxd), deep_avg, measure)) %>%
+  group_by(date,parameter, depth) %>%
+  mutate(measure = mean(measure, na.rm = TRUE)) # eliminate multiple readings
+
+# for each date, interpolate chemistry between depths
+
+new_chem2<- new_chem %>%
+    group_by(date, parameter) %>% 
+    filter(shallow_avg > 0 & deep_avg > 0) %>%
+    select(date, depth, relative_level,depth_bathy, vol_m3, parameter, measure) %>%
+    mutate(int_measure = na.approx(measure)) %>%
+    mutate(vol_measure = int_measure * vol_m3)
+
+# vol_measure is the chemistry measure * the stratum volume, for use in volume-weighted estimates (calculated below)
+
+# look at profiles
+new_chem2a <- new_chem2 %>%
+  mutate(date2 = date)
+new_chem2a$date2 <- as.factor(new_chem2a$date2)
+
+big_chem_222 %>%
+  mutate(year = year(date)) %>%
+  filter(year == 2013) %>% # select an example to look at the data
+  ggplot() +
+  facet_wrap(~date) +
+  geom_point(aes(x = chl, y = start_d)) +
+  geom_path(aes(x = chl, y = start_d)) +
+  scale_y_reverse() +
+  labs(title = "Chl by depth on different dates")
+
+```
+# Volume-weighted Chemistry
+
+Calculate total lake volumes and volume-weighted chemistry on different days based on changes in water level and the 0.1m depth-volume relationship generated above
+
+```{r, message=FALSE, warning=FALSE}
+new_chem_sums_222 <- new_chem2 %>%
+    group_by(date, parameter) %>%   
+    summarize(tot_vol_m3 = sum(vol_m3, na.rm = TRUE),
+            tot_mass_measure = sum(vol_measure, na.rm = TRUE)) %>% # sum all depths to be included in volume-weighted chemistry estimates
+  mutate(whole_lake_measure = tot_mass_measure/tot_vol_m3) %>% # calculate volume-weighted chemistry estimates
+  mutate(year = year(date)) %>%
+  mutate(month = month(date))
+
+new_chem_sums_222 %>%
+write_csv(here("output/L222_vol_wted_chemistry_no_wl.csv"))
+
+# make a file with chemistry for each lake
+# vol_wgt_chem <-
+#   new_chem_sums_239 %>%
+#   filter(date == '2022-06-21',
+#          parameter %in% c('doc', 'chl', 'nh4', 'tdn', 'tdp')) %>%
+#   mutate(Site.name = 'L239')
+
+vol_wgt_chem <- vol_wgt_chem %>% 
+  bind_rows(
+  new_chem_sums_222 %>% 
+  filter(date == '2016-06-20',
+         parameter %in% c('doc', 'chl', 'nh4', 'tdn', 'tdp')) 
+  ) %>% 
+  mutate(Site.name = replace_na(Site.name, 'L222'))
+
+vol_wgt_chem %>% 
+write_csv(here('output/vol_wgt_chem.csv'))
+
+vol_wgt_tdn_tdp_doc <- vol_wgt_chem %>% 
+  filter(parameter %in% c('doc', 'tdn', 'tdp'),
+         month != 7,
+         !date %in% c('2022-06-14', '2022-05-31')) %>% 
+  mutate(parameter = if_else(parameter == 'doc', 'tot_DOC', 
+                             if_else(parameter == 'tdn', 'tot_TDN', 'tot_TDP'))) %>% 
+  pivot_wider(
+    names_from = parameter,
+    values_from = tot_mass_measure
+  ) %>% 
+  mutate(tot_DOC = tot_DOC * 12 * 10^-3) # convert DOC from umol/L to mg/L
+  write_csv(here('output/vol_wgt_tdn_tdp_doc.csv'))
+
+```
+
+
+# Volume-weighted chemistry for the ice-free season
+
+```{r, message=FALSE, warning=FALSE}
+new_chem_sums_pivot <- new_chem_sums %>%
+    select(date, year, month, parameter, whole_lake_measure) %>%
+    pivot_wider(names_from = parameter, values_from = whole_lake_measure)
+
+ice_day <- ice_day %>%
+  mutate(date = on_date) %>%
+  drop_na(date) %>%  # this just gets rid of an annoying NA value in the ice-day data set
+  select(on_date, off_date) %>%
+  mutate(year = year(on_date))
+  
+new_chem_sums_pivot <- full_join(new_chem_sums_pivot, ice_day, by = "year" ) %>%
+  group_by(year) %>%
+  mutate(flag = if_else(date >= off_date & date <= on_date, 1, 0))
+
+# create a flag to denote dates without ice
+  
+ice_free_chem_pivot <- new_chem_sums_pivot %>%
+  pivot_longer(cols = c(-date, -year, -month, -off_date, -on_date, -flag), names_to = "parameter", values_to = "measure") %>%
+  drop_na(date)
+```
+
+
+# Annual means by month for the ice-free season
+plots are converted to pdf files and stored in the "figures" folder
+
+```{r, message=FALSE, warning=FALSE}
+seasonal_annual_mean_chem <- ice_free_chem_pivot %>% # calculate annual means by month for plotting
+  select(date, year, month, parameter, measure, flag) %>%
+  filter(flag == 1) %>%  # limit data to ice-free days
+  group_by(year, month, parameter) %>%
+  summarise(monthly_mean = mean(measure, na.rm = TRUE)) %>%
+  mutate(month_name = case_when(
+    month == "4" ~ "April",
+    month == "5" ~ "May",
+    month == "6" ~ "June",
+    month == "7" ~ "July",
+    month == "8" ~ "August",
+    month == "9" ~ "September",
+    month == "10" ~ "October",
+    month == "11" ~ "November",
+    month == "12" ~ "December")) %>%
+  mutate(parameter = str_c(parameter, "_vw")) %>%
+  ungroup()
+
+seasonal_annual_mean_chem$monthly_mean[is.nan(seasonal_annual_mean_chem$monthly_mean)]<-NA
+
+seasonal_annual_mean_chem %>%
+   pivot_wider(names_from = parameter, values_from = monthly_mean) %>%
+write_csv(here("output/L114_vw_chemistry_monthly_means_no_wl.csv"))
+
+nested_plots_chem <- seasonal_annual_mean_chem %>%
+    group_by(month, parameter) %>%
+    nest() %>%
+    mutate(plot = pmap(list(month, parameter, data),
+    ~ggplot() +
+    geom_point(data = ..3, aes(x = year, y = monthly_mean)) +
+    geom_line(data = ..3, aes(x = year, y = monthly_mean)) +
+    geom_smooth(data = ..3, aes(x = year, y = monthly_mean), se = FALSE) +
+      ylim(c(0, NA)) +  # may want to remove this line to allow plots to scale for easier reading
+      theme_classic() +
+    labs(title = str_c(..1, ..2, sep = " - "),
+         x = "Year",
+         y = "Concentration")),
+    filename = str_c(month, parameter, "plot.pdf", sep = "_"))
+    print(nested_plots_chem)
+     
+nested_plots_print <- nested_plots_chem %>% 
+  ungroup() %>% 
+  select(filename, plot)
+
+pwalk(nested_plots_print,           
+      ggsave, 
+    #  device = pdf,
+      path =  here("data_output/chem_figures"),   
+      width = 190, height = 120, units = "mm") 
+```
+# Annual means for the ice-free season
+plots are converted to pdf files and stored in the "figures" folder
+
+```{r, message=FALSE, warning=FALSE}
+
+seasonal_annual_chem_pivot <- seasonal_annual_mean_chem %>%
+  pivot_wider(names_from = month_name, values_from = monthly_mean) 
+
+seasonal_annual_mean_chem <- seasonal_annual_mean_chem %>% # determine number of months in ice-free season that have profile data
+   mutate(sample = if_else(is.na(monthly_mean), 0, 1)) 
+
+profile_count <- seasonal_annual_mean_chem %>%
+  group_by(year, parameter) %>%
+  summarise(month_sum = sum(sample))
+
+annual_avg <- seasonal_annual_mean_chem %>%
+  left_join(profile_count) 
+
+annual_mean_vw_chem <- annual_avg %>% # calculate annual means by month for plotting
+  filter(month_sum > 2) %>% #only include years with 3 or more profiles in the ice-free season
+  group_by(year, parameter) %>%
+  summarise(annual_mean = mean(monthly_mean, na.rm = TRUE))
+
+# annual means were calculated as the mean of ice-free monthly average data
+
+
+# annual_mean_chem$annual_mean[is.nan(annual_mean_chem$annual_mean)]<-NA
+
+annual_mean_vw_chem %>%
+  pivot_wider(names_from = parameter, values_from = annual_mean) %>%
+write_csv(here("output/L239_annual_mean_vw_chem_no_wl.csv"))
+
+nested_ann_plots_chem <- annual_mean_vw_chem %>%
+    group_by(parameter) %>%
+    nest() %>%
+    mutate(plot = pmap(list(parameter, data),
+    ~ggplot() +
+    geom_point(data = ..2, aes(x = year, y = annual_mean)) +
+    geom_line(data = ..2, aes(x = year, y = annual_mean)) +
+    geom_smooth(data = ..2, aes(x = year, y = annual_mean), se = FALSE) +
+      ylim(c(0, NA)) +  # may want to remove this line to allow plots to scale for easier reading
+      theme_classic() +
+      theme(axis.text.x = element_text(size = 6)) +
+ #     theme(text = element_text(size = 9, colour = 'grey10')) +
+    labs(title = str_c(..1),
+         x = "Year",
+         y = "Concentration")),
+    filename = str_c(parameter, "plot.pdf", sep = "_"))
+    print(nested_ann_plots_chem)
+     
+nested_ann_plots_print <- nested_ann_plots_chem %>% 
+  ungroup() %>% 
+  select(filename, plot)
+
+pwalk(nested_ann_plots_print,           
+      ggsave, 
+  #    device = pdf,
+      path =  here("output/chem_figures"),   
+      width = 190, height = 120, units = "mm") 
+
+nested_ann_plots_print$plot[[1]] + 
+  nested_ann_plots_print$plot[[2]] +
+  nested_ann_plots_print$plot[22] +
+  nested_ann_plots_print$plot[[23]] +
+  nested_ann_plots_print$plot[[11]] +
+  nested_ann_plots_print$plot[[17]] +
+  nested_ann_plots_print$plot[[18]] +
+  plot_layout(nrow = 2) +
+  plot_annotation(title = 'L239 annual mean volume-weighted chemistry') +
+  plot_annotation(tag_levels = c('A', '1'))
+```
+
+
