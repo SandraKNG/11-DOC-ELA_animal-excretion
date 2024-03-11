@@ -53,7 +53,6 @@
   cor.test(excr.pca$AmDOC, excr.pca$PC1)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
-  cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
   
   # correlation matrix
   excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
@@ -66,8 +65,8 @@
   
   hgam <- function(y, k1) {
     mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're'), #+
-                 #s(Site.name, bs = 're'),
+                 s(Trophic.position2, bs = 're') +
+                 s(Incub.Temperature, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
@@ -122,6 +121,7 @@
   gamN.null <- hgam_null(excr$massnorm.N.excr)
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
   summary(gamN.lake)
+  AIC(gamNDOC)
    
   # ...P excretion ----
   # DOC

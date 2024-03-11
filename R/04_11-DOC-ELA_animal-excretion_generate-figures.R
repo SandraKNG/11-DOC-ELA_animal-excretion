@@ -374,17 +374,12 @@
     annotate('text', x = 4.5, y = 7, 
              size = 5, label = 'cor = 0.9, p < 0.001')
   
-  ggplot(excr.vol, aes(x = AmDOC, y = prop.Cexcr)) +
-    geom_point(size = 2) +
-    theme_classic() +
-    labs(x = 'DOC (mg C/L)',
-         y = 'Proportion C excretion (%)') 
-  
   # export final tables ----
   write_csv(excr, "output/excr_final.csv")
   write_csv(excr.vol, "output/excr_vol_surf_final2.csv")
   write_csv(excr.ss, "output/excr_summary.csv")
   write_csv(excrtp.ss, "output/excr_summary_site_tp.csv")
   write_csv(excrDOM.ss, "output/DOMexcr_summary.csv")
+  write_csv(fish.biomass, "output/fish_biomass.csv")
 
   

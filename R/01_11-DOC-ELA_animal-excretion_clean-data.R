@@ -18,6 +18,9 @@
   bms <- read_csv('data/2022-07-11_11-DOC-lakes_biomass.csv', 
                   na = c("NA", ""))
   
+  vol_wgt_tdn_tdp_doc <- read_csv('output/vol_wgt_tdn_tdp_doc.csv', 
+                                  na = c("NA", ""))
+  
   # Clean data, rename and add variables ----
   unique(er$Comments)
   excr <- er %>%
@@ -51,6 +54,7 @@
                                        ifelse(Site.name == 'L222', 'high', NA)))),
       DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
     )
+  
 
   # Look at N/P excretion vs. mass ----
   # ...Fathead minnows only  ----
@@ -197,6 +201,7 @@
   # calculate pop excretion using different fish number methods 
   # (abundance (#fish/lake), density (#fish/ha), biomass (kg/ha))
   # convert existing biomass from kg/ha to g/ha (x 10^3)
+  # convert wet biomass to dry biomass using factor 0.25
   fish.biomass <- bms %>% 
     group_by(Species.code, data.type) %>% 
     reframe(fish.numb = mean(fish.numb, na.rm = T)) %>% 
@@ -365,6 +370,7 @@
   # water residence time for average years = (4.3/(watershed area/lake volume))-0.1
   # biomass (g/m2): convert # fish/ha to # fish/m2 (/10^4), multiply by average mass
   # Area (ha) converted to m2 (*10^4)
+  # converting concentration in ug/L to ug/m3 (x10^-3) then to areal concentration in ug/m2 (x depth in m)
   excr.vol <- excr %>% group_by(Site.name) %>%
     reframe(across(c(
       'Mass', 'Watershed.area', 'Area', 'Zmean', 'AmDOC', 'AmTDN', 'AmTDP',
@@ -383,6 +389,15 @@
     left_join(excr.sp.smry) %>% 
     left_join(vol_wgt_tdn_tdp_doc, by = 'Site.name') %>% 
     mutate(
+      AmTDN_m2 = AmTDN * 10^3 * Zmean,
+      AmTDP_m2 = AmTDP * 10^3 * Zmean,
+      AmDOC_m2 = AmDOC * 10^3 * Zmean,
+      turnover.N.time_h = AmTDN_m2/Agg.N.excr.sp,
+      turnover.P.time_h = AmTDP_m2/Agg.P.excr.sp,
+      turnover.C.time_h = AmDOC_m2/Agg.C.excr.sp,
+      turnover.N.time_yr = turnover.N.time_h / 8760,
+      turnover.P.time_d = turnover.P.time_h / 24,
+      turnover.C.time_yr = turnover.C.time_h / 8760,
       surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
       surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
       surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,
@@ -424,9 +439,10 @@
       values_drop_na = TRUE
     ) 
     
+  
   # ..summary statistics ----
   excr.ss <- excr %>% 
-    select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
+    select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr', 'P.excretion.rate',
              'massnorm.C.excr', 'massnorm.CN.excr', 'massnorm.CP.excr', 'Mass')) %>% 
     mutate(across(where(is.numeric),
                   ~ if_else(. < 0, 0, .))) %>% 

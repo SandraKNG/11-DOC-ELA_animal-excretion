@@ -186,6 +186,62 @@
   
   # check homogeneity of variances
   excr.aov %>% levene_test(massnorm.C.excr ~ DOC.level)
+  
+  # testing things
+  
+  ggplot(excr.vol, aes(x = vol.Cexcr, y = surf.Cexcr_d)) +
+    geom_point(size = 2) +
+    theme_classic() +
+    labs(x = 'Volumetric C excretion (mg/L)',
+         y = 'Surface C excretion rate (mg/d)') 
+  
+  ggplot(excr.vol, aes(x = AmDOC, y = turnover.N.time_yr)) +
+    geom_point(size = 2) +
+    geom_segment( aes(x=AmDOC, xend=AmDOC, y=0, yend=turnover.N.time_yr)) +
+    # geom_bar(stat = "identity") +
+    theme_bw() +
+    scale_y_log10() +
+    labs(x = 'DOC (mg/L)',
+         y = 'N turnover time (year)')
+  
+  ggplot(excr.vol, aes(x = AmDOC, y = turnover.P.time_d)) +
+    geom_point(size = 2) +
+    geom_segment( aes(x=AmDOC, xend=AmDOC, y=0, yend=turnover.P.time_d)) +
+    # geom_bar(stat = "identity") +
+    theme_bw() +
+    scale_y_log10() +
+    labs(x = 'DOC (mg/L)',
+         y = 'P turnover time (days)')
+  
+  ggplot(excr.vol, aes(x = AmDOC, y = turnover.C.time_yr)) +
+    geom_point(size = 2) +
+    geom_segment( aes(x=AmDOC, xend=AmDOC, y=0, yend=turnover.C.time_yr)) +
+    # geom_bar(stat = "identity") +
+    theme_bw() +
+    scale_y_log10() +
+    labs(x = 'DOC (mg/L)',
+         y = 'C turnover time (year)')
+  
+  ggplot(excr, aes(x = Incub.Temperature, y = log10(N.excretion.rate))) +
+    geom_point(size = 2) +
+    geom_smooth() +
+    theme_classic() 
+  
+  ggplot(excr, aes(x = Incub.Temperature, y = P.excretion.rate)) +
+    geom_point(size = 2) +
+    geom_smooth() +
+    theme_classic() 
+  
+  ggplot(excr, aes(x = Incub.Temperature, y = log10(massnorm.N.excr))) +
+    geom_point(size = 2) +
+    geom_smooth() +
+    theme_classic()
+  
+  test <- lm(log10(massnorm.N.excr) ~ Incub.Temperature, data = excr)
+  anova(test)
+  check_model(test)
+  
+  
 
 
   
