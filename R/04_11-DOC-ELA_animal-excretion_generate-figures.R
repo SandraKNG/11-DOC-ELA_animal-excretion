@@ -12,18 +12,21 @@
   library(factoextra) # for pca
 
   # Set up prediction data ----
-  pred_DOC_df <- excr %>% tidyr::expand(Trophic.position2,
+  pred_DOC_df <- excr %>% tidyr::expand(Trophic.position2, Temp,
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                    length = 100),
-                                               rep(median(AmDOC), 100)))
+                                               rep(median(AmDOC), 100)))#,
+                                     # Temp = c(seq(min(Temp), max(Temp),
+                                     #               length = 100),
+                                     #           rep(median(Temp), 100)))
   pred_lnRR_df <- excr.vol %>% tidyr::expand(AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                            length = 100),
                                                        rep(median(AmDOC), 100)))
   
   # Prediction models ----
-  gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)
-  gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)
-  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df)
+  gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)#, exclude = 's(Temp)')
+  gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)#, exclude = 's(Temp)')
+  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df)#, exclude = s(Temp))
   gamlnRRN.pred <- fitted_values(gamlnRRN, pred_lnRR_df)
   gamlnRRP.pred <- fitted_values(gamlnRRP, pred_lnRR_df)
   
@@ -43,17 +46,18 @@
   point.alpha = .4
   line.size = 0.5
   text.size = 3
+  text.size2 = 2.5
   x = 7.3
   
   # create plotting functions
   plot_gam <- function(df, y) {
-    ggplot(df, aes(x = AmDOC, y = fitted)) +  
+    ggplot(df, aes(x = AmDOC, y = fitted)) +
       geom_point(data = excr, aes(x = AmDOC, y = y,
-                                  colour = Trophic.position2), 
+                                  colour = Trophic.position2),
                  size = point.size, alpha = point.alpha) +
       geom_ribbon(aes(ymin = lower, ymax = upper, fill = Trophic.position2),
                   alpha = .2) +
-      geom_line(aes(colour = Trophic.position2), linewidth = line.size) +
+      geom_line(linewidth = line.size, aes (colour = Trophic.position2)) +
       theme_classic(base_size = 10) +
       guides(colour = guide_legend(
         override.aes = list(size = point.size + .5)
@@ -85,26 +89,39 @@
   
   plot_nmds <- function(df){
     ggplot(df, aes(x = NMDS1, y = NMDS2, fill = Trophic.position2)) +
-      geom_point(aes(colour = Trophic.position2, shape = Trophic.position2), 
+      geom_point(aes(colour = Trophic.position2), 
                  size = point.size) +
       theme_classic(base_size = 10)
   }
+  
+  plot_coeff <- function(x, df) {
+    ggplot(df, aes(x = log10(Mass), y = log10(.data[[x]]))) +
+      geom_point(size = 0.9, alpha = point.alpha) +
+      geom_smooth(method = 'lm', color = 'black') +
+      xlab('') +
+      stat_regline_equation(aes(label = after_stat(eq.label)), size = text.size2) +
+      theme_classic(base_size = 8)
+  }
+   
   
   # Figure 1 ----
   # # N excretion
   NexcrDOC.p <- plot_gam(gamNDOC.pred, excr$massnorm.N.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(N~excretion~(μg~N~g^-1~h^-1))))) #+
-    #theme(axis.text.x = element_blank())
+                             paste(N~excretion~(μg~N~g^-1~h^-1))))) 
   NexcrDOC.p
   
   # P excretion
-  PexcrDOC.p <- plot_gam(gamPDOC.pred, excr$massnorm.P.excr) +
+  PexcrDOC.p <- plot_gam(gamPDOC.pred %>% filter(Trophic.position2 == 'C'), 
+                         excr$massnorm.P.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(P~excretion~(μg~P~g^-1~h^-1))))) #+
-    #theme(axis.text.x = element_blank()) 
+                             paste(P~excretion~(μg~P~g^-1~h^-1))))) +
+    geom_hline(data = excrtp.ss %>% filter(Variable == 'massnorm.P.excr' &
+                                           .group == 'Trophic.position2=O'), 
+               aes(yintercept = Mean), linetype = 'dashed', 
+               linewidth = line.size, colour = "#43b284")
   PexcrDOC.p
   
   # N:P excretion
@@ -112,8 +129,8 @@
     labs(x = expression(DOC~(mg~C~L^-1)),
          y = expression(atop(Log[10]~'mass-normalized', 
                              paste('N:P excretion (molar)')))) +
-    geom_hline(yintercept = log10(16), linetype = 'dashed', linewidth = line.size) +
-    annotate("text", x = 8.7, y = 1.5, label = 'Redfield ratio', size = text.size) 
+    geom_hline(yintercept = log10(16), linewidth = line.size) +
+    annotate("text", x = 4.5, y = 1.5, label = 'Redfield ratio', size = text.size) 
   NPexcrDOC.p
   
   
@@ -206,7 +223,7 @@
   # Figure 4 ----
   # ...low DOC ----
   nmds.l.p <- plot_nmds(nmds.l.scores) +
-    stat_ellipse(level = .95, aes(colour = Trophic.position2)) +
+    # stat_ellipse(level = .95, aes(colour = Trophic.position2)) +
     scale_shape_manual(values = c(8, 16, 15, 17)) +
     scale_color_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
     scale_fill_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
@@ -346,6 +363,91 @@
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S2 ----
+  coeffN.p <- plot_coeff("N.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~N~excretion, paste((μg~N~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = 3, aes(label = ..rr.label..), 
+                          size = text.size2)
+  
+  coeffP.p <- plot_coeff("P.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~P~excretion, paste((μg~P~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = 2.7, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC.p <- plot_coeff("C.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C~excretion, paste((mg~C~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = 1, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffSUVA.p <- plot_coeff("SUVA.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~SUVA[254]~excretion, paste((L~mg~C~m^-1~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = 0.1, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffSR.p <- plot_coeff("SR.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~SR~excretion, paste((ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.6, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffBA.p <- plot_coeff("BA.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~β:α~excretion, paste((ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.8, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffFI.p <- plot_coeff("FI.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~FI~excretion, paste((ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.1, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffHIX.p <- plot_coeff("HIX.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~HIX~excretion, paste((ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.6, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC1.p <- plot_coeff("C1.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C1~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.9, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC2.p <- plot_coeff("C2.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C2~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.1, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC3.p <- plot_coeff("C3.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C3~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -1.4, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC4.p <- plot_coeff("C4.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C4~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -1, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC5.p <- plot_coeff("C5.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C5~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.3, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  coeffC7.p <- plot_coeff("C7.excretion.rate", excr.var) +
+    ylab(expression(atop(Log[10]~C7~excretion, paste((RU~ind^-1~h^-1))))) +
+    stat_regline_equation(label.y = -0.2, aes(label = ..rr.label..), 
+                          size = text.size2) 
+  
+  # combine plots ----
+  figS2 <- ggarrange(coeffN.p, coeffP.p, coeffC.p, coeffSUVA.p, coeffSR.p, 
+            coeffBA.p, coeffFI.p, coeffHIX.p, coeffC1.p, coeffC2.p, 
+            coeffC3.p, coeffC4.p, coeffC5.p, coeffC7.p,
+            labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", 
+                      "(h)", "(i)", "(j)", "(k)", "(l)", "(m)", "(n)"),
+            font.label = list(size = 10), label.x = 0.13, label.y = 1.02, 
+            align = "hv", legend = 'none')
+  annotate_figure(figS2, 
+                  bottom = text_grob(expression(Log[10]~mass~(g)), size = 10, y = 1))
+  ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
+         width = 18, height = 19, 
+         units = 'cm', dpi = 600, compression = 'lzw', bg = 'white')
+  
+  # Figure S3 ----
   # plot PCA
   pca.DOM.p <- fviz_pca_biplot(pca.DOM,
                            repel = T,
@@ -361,18 +463,18 @@
                                                     paste((mg~C~L^-1)))), high = "#3c0d03")
   pca.DOM.p
   
-  ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
+  ggsave('tables_figures/final_tables_figures/FigS3.tiff', 
          width = 12, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
   
-  # Figure S3 ----
-  ggplot(excr.pca, aes(AmDOC, Epi.chla)) +
-    geom_point(aes(colour = Site.name), size = 4) +
-    #geom_smooth(method = lm, colour = 'black') +
-    xlab('DOC (mg C/L)') +
-    theme_classic(base_size = 20) +
-    annotate('text', x = 4.5, y = 7, 
-             size = 5, label = 'cor = 0.9, p < 0.001')
+  # Figure S4 ----
+  # ggplot(excr.pca, aes(AmDOC, Epi.chla)) +
+  #   geom_point(aes(colour = Site.name), size = 4) +
+  #   #geom_smooth(method = lm, colour = 'black') +
+  #   xlab('DOC (mg C/L)') +
+  #   theme_classic(base_size = 20) +
+  #   annotate('text', x = 4.5, y = 7, 
+  #            size = 5, label = 'cor = 0.9, p < 0.001')
   
   # export final tables ----
   write_csv(excr, "output/excr_final.csv")

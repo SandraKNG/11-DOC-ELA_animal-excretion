@@ -29,7 +29,8 @@
       AmHisDOC = Amhistorical.DOC,
       Ambient.HIX = AmHIX,
       AmSUVA = AmSUVA254,
-      AmHIX = AmHIX.ohno
+      AmHIX = AmHIX.ohno,
+      Temp = Incub.Temperature
     ) %>% 
     mutate(
       Species.code = factor(Species.code),
@@ -38,7 +39,7 @@
                                                  'I', 'O')
       )),
       Trophic.position2 = factor(
-        ifelse(Species.code == 'YP' | Species.code == 'PD', 'C', 'O')
+        ifelse(Species.code == 'YP' | Species.code == 'WS', 'C', 'O')
       ),
       Site.name = factor(Site.name)
       ) %>% 
@@ -105,7 +106,8 @@
   coeff_check <- function(x, df) {
     plot <- ggplot(df, aes(x = log10(Mass), y = log10(.data[[x]]))) +
       geom_point() +
-      geom_smooth(method = 'lm')
+      geom_smooth(method = 'lm', color = 'black') +
+      theme_classic() 
     print(plot)
   }
   for (x in colnames(excr.NPC.var)) {
@@ -392,32 +394,35 @@
       AmTDN_m2 = AmTDN * 10^3 * Zmean,
       AmTDP_m2 = AmTDP * 10^3 * Zmean,
       AmDOC_m2 = AmDOC * 10^3 * Zmean,
+      AmC2_m2 = AmC2 * 10^3 * Zmean,
       turnover.N.time_h = AmTDN_m2/Agg.N.excr.sp,
       turnover.P.time_h = AmTDP_m2/Agg.P.excr.sp,
       turnover.C.time_h = AmDOC_m2/Agg.C.excr.sp,
+      turnover.C2.time_h = AmC2_m2/Agg.C.excr.sp,
       turnover.N.time_yr = turnover.N.time_h / 8760,
       turnover.P.time_d = turnover.P.time_h / 24,
       turnover.C.time_yr = turnover.C.time_h / 8760,
-      surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
-      surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
-      surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,
-      prop.Nexcr = surf.Nexcr_d / tot_TDN * 100,
-      prop.Pexcr = surf.Pexcr_d / tot_TDP * 100,
-      prop.Cexcr = surf.Cexcr_d / tot_DOC * 100,
-      vol.Nexcr = Agg.N.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.Pexcr = Agg.P.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.Cexcr = Agg.C.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.C2excr = Agg.C2.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.C4excr = Agg.C4.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.C5excr = Agg.C5.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      vol.C7excr = Agg.C7.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L, 
-      lnRR.N = log(vol.Nexcr/AmTDN),
-      lnRR.P = log(vol.Pexcr/AmTDP),
-      lnRR.C = log(vol.Cexcr/AmDOC),
-      lnRR.C2 = log(vol.C2excr/AmC2),
-      lnRR.C4 = log(vol.C4excr/AmC4),
-      lnRR.C5 = log(vol.C5excr/AmC5),
-      lnRR.C7 = log(vol.C7excr/AmC7),
+      turnover.C2.time_yr = turnover.C2.time_h / 8760,
+      # surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
+      # surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
+      # surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,
+      # prop.Nexcr = surf.Nexcr_d / tot_TDN * 100,
+      # prop.Pexcr = surf.Pexcr_d / tot_TDP * 100,
+      # prop.Cexcr = surf.Cexcr_d / tot_DOC * 100,
+      # vol.Nexcr = Agg.N.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.Pexcr = Agg.P.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.Cexcr = Agg.C.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.C2excr = Agg.C2.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.C4excr = Agg.C4.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.C5excr = Agg.C5.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
+      # vol.C7excr = Agg.C7.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L, 
+      # lnRR.N = log(vol.Nexcr/AmTDN),
+      # lnRR.P = log(vol.Pexcr/AmTDP),
+      # lnRR.C = log(vol.Cexcr/AmDOC),
+      # lnRR.C2 = log(vol.C2excr/AmC2),
+      # lnRR.C4 = log(vol.C4excr/AmC4),
+      # lnRR.C5 = log(vol.C5excr/AmC5),
+      # lnRR.C7 = log(vol.C7excr/AmC7),
       DOC.level = factor(case_when(
         Site.name == 'L224' ~ 'low',
         Site.name == 'L239' ~ 'med',
@@ -448,7 +453,13 @@
                   ~ if_else(. < 0, 0, .))) %>% 
     describe_distribution()
   
-  excrtp.ss <- excr %>% group_by(Site.name, Trophic.position2) %>%
+  excrtp.ss <- excr %>% group_by(Trophic.position2) %>%
+    select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
+             'Mass')) %>% 
+    describe_distribution()
+  
+  excrsp.ss <- excr %>% 
+    group_by(Species.code) %>%
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
              'Mass')) %>% 
     describe_distribution()

@@ -63,40 +63,44 @@
   # without trophic position and with population averages
   # create functions to calculate all HGAMs following a template
   
-  hgam <- function(y, k1) {
-    mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're') +
-                 s(Incub.Temperature, bs = 're'),
+  hgam <- function(y, k) {
+    mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're'), #+
+                 # s(Temp, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
   }
 
-  hgam_log <- function(y, k1) {
-    mod <- gam(log10(y) ~ s(AmDOC, by = Trophic.position2, k = k1, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're'),
+  hgam_log <- function(y, k) {
+    mod <- gam(log10(y) ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're') , #+
+                 # s(Temp, bs = 're'),
                method = 'REML', data = excr)
     return(mod)
   }
   
   hgam_null <- function(y) {
     mod <- gam(y ~ 1 +
-                 s(Trophic.position2, bs = 're'), 
-               method = 'REML', select = T, data = excr,
+                 s(Trophic.position2, bs = 're') + 
+                 s(Temp, bs = 're'), 
+               method = 'REML',  data = excr,
                family  = tw())
     return(mod)
   }
   
   hgam_null_log <- function(y) {
-    mod <- gam(log10(y) ~ s(Trophic.position2, bs = 're'),
+    mod <- gam(log10(y) ~ s(Trophic.position2, bs = 're') +
+                 s(Temp, bs = 're'),
                method = 'REML', data = excr)
     return(mod)
   }
 
   hgam_lake <- function(y) {
     mod <- gam(y ~ Site.name +
-                 s(Trophic.position2, bs = 're'), 
-               method = 'REML', select = T, data = excr,
+                 s(Trophic.position2, bs = 're') +
+                 s(Temp, bs = 're'), 
+               method = 'REML', data = excr,
                family  = tw())
     return(mod)
   }
@@ -122,6 +126,7 @@
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
   summary(gamN.lake)
   AIC(gamNDOC)
+  AIC(gamNDOC, gamN.null, gamN.lake)
    
   # ...P excretion ----
   # DOC
@@ -129,6 +134,7 @@
   lapply(gam.details, function(f) f(gamPDOC))
   gamP.null <- hgam_null(excr$massnorm.P.excr)
   gamP.lake <- hgam_lake(excr$massnorm.P.excr)
+  AIC(gamPDOC)
   
   # ...N:P excretion ----
   # DOC
@@ -136,6 +142,7 @@
   lapply(gam.details, function(f) f(gamNPDOC))
   gamNP.null <- hgam_null_log(excr$massnorm.NP.excr)
   gamNP.lake <- hgam_lake_log(excr$massnorm.NP.excr)
+  AIC(gamNPDOC)
   
   # Individual dry mass
   # gamBMDOC <- hgam(excr$Mass, 5)
