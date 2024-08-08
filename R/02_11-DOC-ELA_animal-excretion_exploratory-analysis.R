@@ -8,6 +8,7 @@
   library(ggdist) # for stat_halfeye
   library(ggpubr) # for ggarrange function that allows to put all graphs on 1 page
   library(MetBrewer)
+  library(performance)
   
   # labels
   Trophic.labels <- c('Invert/piscivore', 'Invertivore', 'Omnivore')
@@ -222,24 +223,84 @@
     labs(x = 'DOC (mg/L)',
          y = 'C turnover time (year)')
   
-  ggplot(excr, aes(x = Incub.Temperature, y = log10(N.excretion.rate))) +
+  # Do excretion rates change with incubation temperature (temperature effect)?
+  
+  ggplot(excr, aes(x = Temp, y = log10(N.excretion.rate))) +
     geom_point(size = 2) +
     geom_smooth() +
     theme_classic() 
   
-  ggplot(excr, aes(x = Incub.Temperature, y = P.excretion.rate)) +
+  ggplot(excr, aes(x = Temp, y = P.excretion.rate)) +
     geom_point(size = 2) +
     geom_smooth() +
     theme_classic() 
   
-  ggplot(excr, aes(x = Incub.Temperature, y = log10(massnorm.N.excr))) +
+  ggplot(excr, aes(x = Temp, y = log10(massnorm.N.excr))) +
+    geom_point(size = 2) +
+    geom_smooth(method = lm) +
+    theme_classic()
+  
+  ggplot(excr, aes(x = Temp, y = log10(massnorm.P.excr))) +
+    geom_point(size = 2) +
+    geom_smooth(method = lm) +
+    theme_classic()
+  
+  temp.N <- lm(log10(massnorm.N.excr) ~ Temp, data = excr)
+  anova(temp.N)
+  temp.N$coefficients
+  check_model(temp.N)
+  
+  temp.P <- lm(log10(massnorm.P.excr) ~ Temp, data = excr)
+  anova(temp.P)
+  temp.P$coefficients
+  check_model(temp.P)
+  
+  #  Do excretion rates change with incubation time (stress effect)?
+  ggplot(excr, aes(x = Time.elapsed, y = log10(massnorm.N.excr))) +
+    geom_point(size = 2) +
+    geom_smooth(method = lm) +
+    theme_classic()
+  
+  time.N <- lm(log10(massnorm.N.excr) ~ Time.elapsed, data = excr)
+  summary(time.N)
+  anova(time.N)
+  time.N$coefficients
+  check_model(time.N)
+  
+  ggplot(excr %>% filter(Species.code == 'YP'), 
+         aes(x = Time.elapsed, y = log10(massnorm.P.excr))) +
+    geom_point(size = 2) +
+    geom_smooth(method = lm) +
+    theme_classic()
+  
+  time.P <- lm(log10(massnorm.P.excr) ~ Time.elapsed, data = excr)
+  summary(time.P)
+  anova(time.P)
+  time.P$coefficients
+  check_model(time.P)
+  
+  ggplot(excr, aes(x = Time.elapsed, y = Temp)) +
+    geom_point(size = 2) +
+    #geom_smooth(method = lm) +
+    theme_classic()
+  
+  # What about fish mass and incubation time or ambient DOC?
+  
+  ggplot(excr, aes(x = Time.elapsed, y = log10(Mass))) +
+    geom_point(size = 2) +
+    #geom_smooth(method = lm) +
+    theme_classic()
+  
+  ggplot(excr, aes(x = AmDOC, y = log10(Mass))) +
     geom_point(size = 2) +
     geom_smooth() +
     theme_classic()
   
-  test <- lm(log10(massnorm.N.excr) ~ Incub.Temperature, data = excr)
-  anova(test)
-  check_model(test)
+  ggplot(excr, aes(x = AmDOC, y = Temp)) +
+    geom_point(size = 2) +
+    geom_smooth() +
+    theme_classic()
+  
   
   
 

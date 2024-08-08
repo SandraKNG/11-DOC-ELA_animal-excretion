@@ -65,8 +65,8 @@
   
   hgam <- function(y, k) {
     mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're'), #+
-                 # s(Temp, bs = 're'),
+                 s(Trophic.position2, bs = 're') +
+                 s(Temp, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
@@ -81,25 +81,22 @@
   }
   
   hgam_null <- function(y) {
-    mod <- gam(y ~ 1 +
-                 s(Trophic.position2, bs = 're') + 
-                 s(Temp, bs = 're'), 
-               method = 'REML',  data = excr,
+    mod <- gam(y ~ 1, #+
+                 # s(Trophic.position2, bs = 're'),
+               method = 'REML',  data = excr.sp,
                family  = tw())
     return(mod)
   }
   
   hgam_null_log <- function(y) {
-    mod <- gam(log10(y) ~ s(Trophic.position2, bs = 're') +
-                 s(Temp, bs = 're'),
+    mod <- gam(log10(y) ~ s(Trophic.position2, bs = 're'),
                method = 'REML', data = excr)
     return(mod)
   }
 
   hgam_lake <- function(y) {
     mod <- gam(y ~ Site.name +
-                 s(Trophic.position2, bs = 're') +
-                 s(Temp, bs = 're'), 
+                 s(Trophic.position2, bs = 're'),
                method = 'REML', data = excr,
                family  = tw())
     return(mod)
@@ -120,13 +117,14 @@
   
   # ...N excretion ----
   # DOC
-  gamNDOC <- hgam(excr$massnorm.N.excr, 6)
+  gamNDOC <- hgam(excr$massnorm.N.excr, 3)
   lapply(gam.details, function(f) f(gamNDOC))
-  gamN.null <- hgam_null(excr$massnorm.N.excr)
+  gamN.null <- hgam_null(excr.sp$massnorm.N.excr.sp)
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
   summary(gamN.lake)
   AIC(gamNDOC)
-  AIC(gamNDOC, gamN.null, gamN.lake)
+  AIC(gamN.null)
+  # AIC(gamNDOC, gamN.null, gamN.lake)
    
   # ...P excretion ----
   # DOC
@@ -145,8 +143,8 @@
   AIC(gamNPDOC)
   
   # Individual dry mass
-  # gamBMDOC <- hgam(excr$Mass, 5)
-  # lapply(gam.details, function(f) f(gamBMDOC))
+  gamBMDOC <- hgam(excr.sp$Mass.sp, 5)
+  lapply(gam.details, function(f) f(gamBMDOC))
   
   # ...lnRR ----
   # N
@@ -164,9 +162,9 @@
   # make AIC table
   AIC.tbl <- AIC(gamNDOC, gamN.lake, gamN.null,  
                  gamPDOC, gamP.lake, gamP.null,
-                 gamNPDOC, gamNP.lake, gamNP.null,
-                 gamlnRRN, gamlnRRN.null,
-                 gamlnRRP, gamlnRRP.null)
+                 gamNPDOC, gamNP.lake, gamNP.null)
+                 # gamlnRRN, gamlnRRN.null,
+                 # gamlnRRP, gamlnRRP.null)
   
   AIC.table <- AIC.tbl %>%  rownames_to_column(var = "Model") %>%
     mutate(df = round(df, digits = 0),

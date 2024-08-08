@@ -185,6 +185,9 @@
   
   # add newly created columns to excr dataset
   excr <- left_join(excr, excr.var)
+  excr <- excr %>% mutate(
+    massnorm.N.excr_corr = massnorm.N.excr/Temp^0.0404
+    )
   
   ####################### Create datasets for data analysis ###################
   # function to rename some DOM characteristics
@@ -389,20 +392,29 @@
       wat.res.time.h = wat.res.time.y * 8760
     ) %>%
     left_join(excr.sp.smry) %>% 
-    left_join(vol_wgt_tdn_tdp_doc, by = 'Site.name') %>% 
+    # left_join(vol_wgt_tdn_tdp_doc, by = 'Site.name') %>% 
     mutate(
       AmTDN_m2 = AmTDN * 10^3 * Zmean,
       AmTDP_m2 = AmTDP * 10^3 * Zmean,
       AmDOC_m2 = AmDOC * 10^3 * Zmean,
       AmC2_m2 = AmC2 * 10^3 * Zmean,
+      AmC4_m2 = AmC4 * 10^3 * Zmean,
+      AmC5_m2 = AmC5 * 10^3 * Zmean,
+      AmC7_m2 = AmC7 * 10^3 * Zmean,
       turnover.N.time_h = AmTDN_m2/Agg.N.excr.sp,
       turnover.P.time_h = AmTDP_m2/Agg.P.excr.sp,
       turnover.C.time_h = AmDOC_m2/Agg.C.excr.sp,
       turnover.C2.time_h = AmC2_m2/Agg.C.excr.sp,
+      turnover.C4.time_h = AmC4_m2/Agg.C.excr.sp,
+      turnover.C5.time_h = AmC5_m2/Agg.C.excr.sp,
+      turnover.C7.time_h = AmC7_m2/Agg.C.excr.sp,
       turnover.N.time_yr = turnover.N.time_h / 8760,
-      turnover.P.time_d = turnover.P.time_h / 24,
+      turnover.P.time_yr = turnover.P.time_h / 8760,
       turnover.C.time_yr = turnover.C.time_h / 8760,
       turnover.C2.time_yr = turnover.C2.time_h / 8760,
+      turnover.C4.time_yr = turnover.C4.time_h / 8760,
+      turnover.C5.time_yr = turnover.C5.time_h / 8760,
+      turnover.C7.time_yr = turnover.C7.time_h / 8760,
       # surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
       # surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
       # surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,

@@ -94,13 +94,28 @@
       theme_classic(base_size = 10)
   }
   
-  plot_coeff <- function(x, df) {
+  plot_coeff <- function(x, df, y1, y2) {
     ggplot(df, aes(x = log10(Mass), y = log10(.data[[x]]))) +
       geom_point(size = 0.9, alpha = point.alpha) +
       geom_smooth(method = 'lm', color = 'black') +
       xlab('') +
-      stat_regline_equation(aes(label = after_stat(eq.label)), size = text.size2) +
+      stat_regline_equation(label.y = y1, aes(label = after_stat(eq.label)), 
+                            size = text.size2) +
+      stat_regline_equation(label.y = y2, aes(label = ..rr.label..), 
+                            size = text.size2) 
       theme_classic(base_size = 8)
+  }
+  
+  plot_sp <- function(x, df){
+    ggplot(df,
+           aes(x = AmDOC, y = .data[[x]])) +
+      geom_point(aes(colour = Species.code),
+                 size = point.size + .2,
+                 alpha = point.alpha) +
+      theme_classic(base_size = 10) +
+      scale_color_brewer(palette = 'Dark2',
+                         name = 'Species',
+                         labels = Species.labels)
   }
    
   
@@ -374,7 +389,7 @@
                           size = text.size2) 
   
   coeffC.p <- plot_coeff("C.excretion.rate", excr.var) +
-    ylab(expression(atop(Log[10]~C~excretion, paste((mg~C~ind^-1~h^-1))))) +
+    ylab(expression(atop(Log[10]~DOC~excretion, paste((mg~C~ind^-1~h^-1))))) +
     stat_regline_equation(label.y = 1, aes(label = ..rr.label..), 
                           size = text.size2) 
   
@@ -432,6 +447,27 @@
     ylab(expression(atop(Log[10]~C7~excretion, paste((RU~ind^-1~h^-1))))) +
     stat_regline_equation(label.y = -0.2, aes(label = ..rr.label..), 
                           size = text.size2) 
+  
+  # Figure S3 ----
+  # Individual excretion rates across streams by species
+  Nexcrsp.p <- plot_sp('massnorm.N.excr', excr) +
+    labs(x = '',
+         y = expression(atop('Mass-normalized',
+                             paste(N~excretion~(μg~N/g/h)))))
+  Nexcrsp.p
+  
+  Pexcrsp.p <- plot_sp('massnorm.P.excr', excr) +
+    labs(x = '',
+         y = expression(atop('Mass-normalized',
+                             paste(P~excretion~(μg~P/g/h))))) 
+  Pexcrsp.p 
+  
+  NPexcrsp.p <- plot_sp('Log10.massnorm.NP.excr', excr) +
+    labs(x = '',
+         y = expression(atop(Log[10]~'mass-normalized', 
+                             paste('N:P excretion (molar)')))) 
+  NPexcrsp.p 
+  
   
   # combine plots ----
   figS2 <- ggarrange(coeffN.p, coeffP.p, coeffC.p, coeffSUVA.p, coeffSR.p, 
