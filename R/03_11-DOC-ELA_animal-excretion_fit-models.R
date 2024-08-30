@@ -1,5 +1,7 @@
-  #### fish nutrient and DOC excretion across a lake DOC gradient ####
-  # This code was created by S. Klemet-N'Guessan in 2022 and 2023
+  #### Fish supply distinct nutrients and dissolved organic matter composition ####
+  ### relative to ambient concentrations in northern lakes ####
+  
+  # This code was created by S. Klemet-N'Guessan in 2022-2024
   # R version 4.3.0
  
   ############################ MODELS ############################################# 
@@ -124,7 +126,6 @@
   summary(gamN.lake)
   AIC(gamNDOC)
   AIC(gamN.null)
-  # AIC(gamNDOC, gamN.null, gamN.lake)
    
   # ...P excretion ----
   # DOC
@@ -146,25 +147,10 @@
   gamBMDOC <- hgam(excr.sp$Mass.sp, 5)
   lapply(gam.details, function(f) f(gamBMDOC))
   
-  # ...lnRR ----
-  # N
-  gamlnRRN <- gam(lnRR.N ~ s(AmDOC, k = 7, bs = 'tp'), 
-                  method = 'REML', data = excr.vol)
-  lapply(gam.details, function(f) f(gamlnRRN))
-  gamlnRRN.null <- gam(lnRR.N ~ 1, method = 'REML', data = excr.vol)
-  
-  # P
-  gamlnRRP <- gam(lnRR.P ~ s(AmDOC,k = 3, bs = 'tp'),
-                  method = 'REML', data = excr.vol)
-  lapply(gam.details, function(f) f(gamlnRRP))
-  gamlnRRP.null <- gam(lnRR.P ~ 1, method = 'REML', data = excr.vol)
-  
   # make AIC table
   AIC.tbl <- AIC(gamNDOC, gamN.lake, gamN.null,  
                  gamPDOC, gamP.lake, gamP.null,
                  gamNPDOC, gamNP.lake, gamNP.null)
-                 # gamlnRRN, gamlnRRN.null,
-                 # gamlnRRP, gamlnRRP.null)
   
   AIC.table <- AIC.tbl %>%  rownames_to_column(var = "Model") %>%
     mutate(df = round(df, digits = 0),
@@ -226,10 +212,7 @@
   print(tukey.results, n = 33)
   
   # t-test ----
-  excr.ttest <- excr.var #%>%
-    # mutate(across(where(is.numeric),
-    #               ~ if_else(. < 0, 0, .)))
-  # Create an empty list to store t-test results
+  excr.ttest <- excr.var 
   t_test_results <- list()
   
   # Loop through selected columns

@@ -1,5 +1,7 @@
-  #### ***fish nutrient and DOC excretion across a lake DOC gradient ####
-  # This code was created by S. Klemet-N'Guessan in 2022 and 2023
+  #### Fish supply distinct nutrients and dissolved organic matter composition #### 
+  ### relative to ambient concentrations in northern lakes ####
+  
+  # This code was created by S. Klemet-N'Guessan in 2022-2024
   # R version 4.3.0
   
   # Load libraries and read datasets ----
@@ -55,34 +57,7 @@
                                        ifelse(Site.name == 'L222', 'high', NA)))),
       DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
     )
-  
 
-  # Look at N/P excretion vs. mass ----
-  # ...Fathead minnows only  ----
-  # because coeffs are too high for N excr (>1) + too low for P excr (<0.3)
-  # N excretion
-  # ggplot(excr %>%  filter(Species.code == 'FM',
-  #                         Log10.N.excretion.rate > 0.5),
-  #        aes(x = Log10.mass, y = Log10.N.excretion.rate)) +
-  #   geom_point() +
-  #   geom_smooth(method = 'lm') +
-  #   theme(legend.position = 'none')
-  # modelN.FM <- lm(Log10.N.excretion.rate ~ Log10.mass, 
-  #              data = excr %>%  
-  #                filter(Species.code == 'FM',
-  #                       Log10.N.excretion.rate > 0.5))
-  # modelN.FM$coefficients["Log10.mass"]
-  # 
-  # # P excretion
-  # ggplot(excr %>%  filter(Species.code == 'FM'),
-  #        aes(x = Log10.mass, y = Log10.P.excretion.rate)) +
-  #   geom_point() +
-  #   geom_smooth(method = 'lm') +
-  #   theme(legend.position = 'none')
-  # modelP.FM <- lm(Log10.P.excretion.rate ~ Log10.mass, 
-  #                 data = excr %>%  
-  #                   filter(Species.code == 'FM'))
-  # modelP.FM$coefficients["Log10.mass"]
   
   # ...calculate b coeff of variation for all excretion rates + all species ----
   # to normalize excretion rates
@@ -97,11 +72,9 @@
     select(ID, Site.name, Trophic.position2, ends_with('excretion.rate'), Mass, 
            -starts_with(c('N.e', 'P.e', 'C.e'))) %>%
     dplyr::filter(
-      !is.na(SUVA.excretion.rate),
-      # !between(ID, 935, 946),
-      # !ID %in% c(1008, 1012, 1013, 115, 901, 904, 907, 911, 
-      #            907, 927, 928, 929, 930)
+      !is.na(SUVA.excretion.rate)
     )
+  
   # check outliers
   coeff_check <- function(x, df) {
     plot <- ggplot(df, aes(x = log10(Mass), y = log10(.data[[x]]))) +
@@ -120,13 +93,6 @@
       coeff_check(x, excr.DOM.var)
     }
   }
-  
-  # filter out some outliers
-  # excr.DOM.var <- excr.DOM.var %>%
-  #   dplyr::filter(log10(C1.excretion.rate) > -4.5)
-  # excr.NPC.var <- excr.NPC.var %>% mutate(C.excretion.rate = 
-  #                                           case_when(C.excretion.rate ~ 12.5, 
-  #                                                   NA, .))
   
   # combine NPC and DOM datasets
   excr.var <- left_join(excr.NPC.var, excr.DOM.var)
@@ -359,7 +325,7 @@
     bind_rows(excr.amb) %>%
     dplyr::filter(!is.na(C4))
   
-  # ..simulate fish volumetric excretion ----
+  # ..simulate fish volumetric excretion - NOT used for current ms analysis ----
   
   # summarise PARAFAC excretion for the three lakes have data
   excr.PARAFAC <- excr.nmds %>% 
@@ -392,7 +358,6 @@
       wat.res.time.h = wat.res.time.y * 8760
     ) %>%
     left_join(excr.sp.smry) %>% 
-    # left_join(vol_wgt_tdn_tdp_doc, by = 'Site.name') %>% 
     mutate(
       AmTDN_m2 = AmTDN * 10^3 * Zmean,
       AmTDP_m2 = AmTDP * 10^3 * Zmean,
@@ -415,26 +380,6 @@
       turnover.C4.time_yr = turnover.C4.time_h / 8760,
       turnover.C5.time_yr = turnover.C5.time_h / 8760,
       turnover.C7.time_yr = turnover.C7.time_h / 8760,
-      # surf.Nexcr_d = Agg.N.excr.sp * Area * 10 ^ 4 * 24,
-      # surf.Pexcr_d = Agg.P.excr.sp * Area * 10 ^ 4 * 24,
-      # surf.Cexcr_d = Agg.C.excr.sp * Area * 10 ^ 4 * 24,
-      # prop.Nexcr = surf.Nexcr_d / tot_TDN * 100,
-      # prop.Pexcr = surf.Pexcr_d / tot_TDP * 100,
-      # prop.Cexcr = surf.Cexcr_d / tot_DOC * 100,
-      # vol.Nexcr = Agg.N.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.Pexcr = Agg.P.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.Cexcr = Agg.C.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.C2excr = Agg.C2.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.C4excr = Agg.C4.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.C5excr = Agg.C5.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L,
-      # vol.C7excr = Agg.C7.excr.sp * Area * 10 ^ 4 * wat.res.time.h / lake.vol.L, 
-      # lnRR.N = log(vol.Nexcr/AmTDN),
-      # lnRR.P = log(vol.Pexcr/AmTDP),
-      # lnRR.C = log(vol.Cexcr/AmDOC),
-      # lnRR.C2 = log(vol.C2excr/AmC2),
-      # lnRR.C4 = log(vol.C4excr/AmC4),
-      # lnRR.C5 = log(vol.C5excr/AmC5),
-      # lnRR.C7 = log(vol.C7excr/AmC7),
       DOC.level = factor(case_when(
         Site.name == 'L224' ~ 'low',
         Site.name == 'L239' ~ 'med',

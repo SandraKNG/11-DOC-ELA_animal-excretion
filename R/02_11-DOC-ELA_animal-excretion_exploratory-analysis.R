@@ -1,5 +1,7 @@
-  #### fish nutrient and DOC excretion across a lake DOC gradient ####
-  # This code was created by S. Klemet-N'Guessan in 2022 and 2023
+  #### Fish supply distinct nutrients and dissolved organic matter composition ####
+  ### relative to ambient concentrations in northern lakes ####
+  
+  # This code was created by S. Klemet-N'Guessan in 2022-2024
   # R version 4.3.0
 
   
@@ -14,6 +16,34 @@
   Trophic.labels <- c('Invert/piscivore', 'Invertivore', 'Omnivore')
   Species.labels <- c('fathead minnow', 'pearl dace', 
                       'white sucker', 'yellow perch')
+  
+  
+  # Look at N/P excretion vs. mass ----
+  #..Fathead minnows only  ----
+  because coeffs are too high for N excr (>1) + too low for P excr (<0.3)
+  N excretion
+  ggplot(excr %>%  filter(Species.code == 'FM',
+                          Log10.N.excretion.rate > 0.5),
+         aes(x = Log10.mass, y = Log10.N.excretion.rate)) +
+    geom_point() +
+    geom_smooth(method = 'lm') +
+    theme(legend.position = 'none')
+  modelN.FM <- lm(Log10.N.excretion.rate ~ Log10.mass,
+               data = excr %>%
+                 filter(Species.code == 'FM',
+                        Log10.N.excretion.rate > 0.5))
+  modelN.FM$coefficients["Log10.mass"]
+
+  # P excretion
+  ggplot(excr %>%  filter(Species.code == 'FM'),
+         aes(x = Log10.mass, y = Log10.P.excretion.rate)) +
+    geom_point() +
+    geom_smooth(method = 'lm') +
+    theme(legend.position = 'none')
+  modelP.FM <- lm(Log10.P.excretion.rate ~ Log10.mass,
+                  data = excr %>%
+                    filter(Species.code == 'FM'))
+  modelP.FM$coefficients["Log10.mass"]
   
   # ..Trophic position ----
   # N excretion vs. DOC relative to trophic position

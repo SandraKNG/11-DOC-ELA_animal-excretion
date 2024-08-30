@@ -1,5 +1,7 @@
-  #### fish nutrient and DOC excretion across a lake DOC gradient ####
-  # This code was created by S. Klemet-N'Guessan in 2022 and 2023
+  #### Fish supply distinct nutrients and dissolved organic matter composition ####
+  ### relative to ambient concentrations in northern lakes ####
+  
+  # This code was created by S. Klemet-N'Guessan in 2022-2024
   # R version 4.3.0
   
   ################################ FINAL FIGURES #################################
@@ -15,18 +17,15 @@
   pred_DOC_df <- excr %>% tidyr::expand(Trophic.position2, Temp,
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                    length = 100),
-                                               rep(median(AmDOC), 100)))#,
-                                     # Temp = c(seq(min(Temp), max(Temp),
-                                     #               length = 100),
-                                     #           rep(median(Temp), 100)))
+                                               rep(median(AmDOC), 100)))
   pred_lnRR_df <- excr.vol %>% tidyr::expand(AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                            length = 100),
                                                        rep(median(AmDOC), 100)))
   
   # Prediction models ----
-  gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)#, exclude = 's(Temp)')
-  gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)#, exclude = 's(Temp)')
-  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df)#, exclude = s(Temp))
+  gamNDOC.pred <- fitted_values(gamNDOC, pred_DOC_df)
+  gamPDOC.pred <- fitted_values(gamPDOC, pred_DOC_df)
+  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_DOC_df)
   gamlnRRN.pred <- fitted_values(gamlnRRN, pred_lnRR_df)
   gamlnRRP.pred <- fitted_values(gamlnRRP, pred_lnRR_df)
   
@@ -221,9 +220,6 @@
     scale_fill_manual(name = 'DOC',
                        labels = DOC.labels,
                        values = met.brewer('Greek', 3, direction = -1)) +
-    # scale_shape_manual(name = 'Trophic position',
-    #                    labels = Trophic.labels,
-    #                    values = c(21, 24)) +
     scale_x_discrete(labels = DOM.labels) +
     theme_bw(base_size = 10) +
     theme(axis.title.x = element_text(vjust = -.4),
@@ -238,7 +234,6 @@
   # Figure 4 ----
   # ...low DOC ----
   nmds.l.p <- plot_nmds(nmds.l.scores) +
-    # stat_ellipse(level = .95, aes(colour = Trophic.position2)) +
     scale_shape_manual(values = c(8, 16, 15, 17)) +
     scale_color_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
     scale_fill_manual(values = c("#f5c34d", "#dd5129", "#43b284")) +
@@ -281,43 +276,6 @@
          width = 10, height = 16, 
          units = 'cm', dpi = 600, compression = 'lzw')
   
-  # Figure 5 ----
-  lnRRN.p <- ggplot(gamlnRRN.pred, aes(x = AmDOC, y = fitted)) +
-    geom_point(data = excr.vol, aes(x = AmDOC, y = lnRR.N), 
-               size = point.size, alpha = point.alpha) +
-    geom_ribbon(aes(ymin = lower, ymax = upper), 
-                alpha = .2) +
-    geom_line(linewidth = line.size) +
-    geom_hline(yintercept = 0, linetype = 'dashed') +
-    labs(x = '',
-         y = 'lnRR N') +
-    theme_classic(base_size = 10) +
-    scale_x_continuous(n.breaks = 6) +
-    theme(axis.text.x = element_blank()) +
-    annotate("text", x = x, y = 5,
-             label = 'volumetric excretion above ambient concentration',
-             size = text.size) +
-    annotate("text", x = x, y = -5,
-             label = 'volumetric excretion below ambient concentration',
-             size = text.size)
-  lnRRN.p
-  
-  lnRRP.p <- ggplot(excr.vol, aes(x = AmDOC, y = lnRR.P)) +
-    geom_point(size = point.size, alpha = point.alpha) +
-    #geom_hline(yintercept = lnRR.P.av, linetype = 'longdash') +
-    geom_hline(yintercept = 0, linetype = 'dashed') +
-    labs(x = expression(DOC~(mg~C~L^-1)),
-         y = 'lnRR P') +
-    theme_classic(base_size = 10) +
-    scale_x_continuous(n.breaks = 6) +
-    annotate("text", x = x, y = 7,
-             label = 'volumetric excretion above ambient concentration',
-             size = text.size) +
-    annotate("text", x = x, y = -1,
-             label = 'volumetric excretion below ambient concentration',
-             size = text.size)
-  lnRRP.p
-  
   # combine plots
   ggarrange(
     lnRRN.p,
@@ -343,19 +301,10 @@
     scale_y_discrete(labels = lnRR.labels) +
     geom_tile(aes(fill = value), colour = "white") +
     theme_bw(base_size = 10) +
-    #theme(legend.position = 'bottom') +
     scale_fill_gradient2(name = 'lnRR', midpoint = 0, 
                          mid = "#eee8d5", low = "#dc322f", high = "#268bd2") +
-    theme(plot.title = element_text(size = 10, face = 'bold')) #+
-    #ggtitle("(c)")
+    theme(plot.title = element_text(size = 10, face = 'bold')) 
   lnRRDOM.p
-  
-  # ggarrange(lnRRNP.p, lnRRDOM.p, 
-  #           nrow = 2, ncol = 1,
-  #           font.label = list(size = 10), label.x = 0.14, label.y = 1.05, 
-  #           align = 'v', heights = c(1.2, 1))
-  
-  #(lnRRN.p/lnRRP.p)|lnRRDOM.p + plot_annotation(tag_levels = "a")
   
   ggsave('tables_figures/final_tables_figures/Fig6.tiff', 
          width = 12, height = 9, bg = 'white',
@@ -502,15 +451,6 @@
   ggsave('tables_figures/final_tables_figures/FigS3.tiff', 
          width = 12, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
-  
-  # Figure S4 ----
-  # ggplot(excr.pca, aes(AmDOC, Epi.chla)) +
-  #   geom_point(aes(colour = Site.name), size = 4) +
-  #   #geom_smooth(method = lm, colour = 'black') +
-  #   xlab('DOC (mg C/L)') +
-  #   theme_classic(base_size = 20) +
-  #   annotate('text', x = 4.5, y = 7, 
-  #            size = 5, label = 'cor = 0.9, p < 0.001')
   
   # export final tables ----
   write_csv(excr, "output/excr_final.csv")
