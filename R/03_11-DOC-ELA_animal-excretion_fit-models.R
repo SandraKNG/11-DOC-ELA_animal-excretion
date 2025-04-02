@@ -6,6 +6,7 @@
  
   ############################ MODELS ############################################# 
   # load libraries ----
+  library(PCAtest)
   library(mgcv) # for GAM analysis (gam function)
   library(gratia) # to draw GAM
   library(vegan) # for NMDS
@@ -14,20 +15,23 @@
   library(car) # for Anova function
   library(rstatix) # for many pipe-friendly stat tools
   library(writexl) # to export excel file
+  library(ggcorrplot)
   
   # PCA ----
   # PCA to map all lake parameters except for DOM composition
   excr.pca.all <- excr.pca %>% 
     select(c(Site.name:AmTDN, Area:Part.P), 
-           -c(pH, Zmean, Zmax, Conductivity)) %>% 
+           -c(pH, Zmax, Thermo.depth, Conductivity)) %>% 
     rename(DOC = AmDOC,
-           TDP = AmTDP) %>% 
-    mutate(Thermo.depth = replace_na(Thermo.depth, 1.70))
+           TDP = AmTDP) #%>% 
+    # mutate(Thermo.depth = replace_na(Thermo.depth, 1.70))
   # do PCA
-  pca.all <- princomp(excr.pca.all[, 2:11],cor = TRUE, scores = TRUE)
+  pca.all <- princomp(excr.pca.all[, 2:11], cor = TRUE, scores = TRUE)
   biplot(pca.all)
   # check loadings
   pca.all$loadings
+  #pca.mx <- round(cor(excr.pca.all), 1)
+  #PCAtest(pca.all, 100, 100, 0.05, varcorr=FALSE, counter=FALSE, plot=TRUE)
   # Extract PC1 scores
   pca.PC1 <- pca.all$scores[,1]
   # add it to current datasets
@@ -55,11 +59,20 @@
   cor.test(excr.pca$AmDOC, excr.pca$PC1)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDP)
   cor.test(excr.pca$AmDOC, excr.pca$AmTDN)
+  cor.test(excr.pca$AmDOC, excr.pca$Zmean)
   
   # correlation matrix
   excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
-  cor.mx <- cor(excr.cor[2:26])
-  #corrplot(cor.mx)
+  
+  cor.mx <- round(cor(excr.cor[2:26], use = "pairwise.complete.obs"), 1)
+  
+  # Computing correlation matrix with p-values 
+  corrp.mat <- cor_pmat(excr.cor[2:26], use = "pairwise.complete.obs") 
+  
+  # corrplot(cor.mx)
+  # Visualizing upper and lower triangle layouts 
+  ggcorrplot(cor.mx, hc.order = TRUE,  type = "upper", 
+             outline.color = "white", p.mat = corrp.mat)
   
   # GAM ----
   # without trophic position and with population averages
@@ -67,25 +80,24 @@
   
   hgam <- function(y, k) {
     mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're') +
-                 s(Temp, bs = 're'),
+                 s(Zmean, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
     return(mod)
   }
-
+#
   hgam_log <- function(y, k) {
     mod <- gam(log10(y) ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
-                 s(Trophic.position2, bs = 're') , #+
-                 # s(Temp, bs = 're'),
+                 s(Zmean, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
+                 s(Trophic.position2, bs = 're'), 
                method = 'REML', data = excr)
     return(mod)
   }
   
   hgam_null <- function(y) {
-    mod <- gam(y ~ 1, #+
-                 # s(Trophic.position2, bs = 're'),
-               method = 'REML',  data = excr.sp,
+    mod <- gam(y ~ s(Trophic.position2, bs = 're'),
+               method = 'REML',  data = excr,
                family  = tw())
     return(mod)
   }
@@ -119,9 +131,10 @@
   
   # ...N excretion ----
   # DOC
-  gamNDOC <- hgam(excr$massnorm.N.excr, 3)
+  gamNDOC <- hgam(excr$massnorm.N.excr, 5)
+  concurvity(gamNDOC)
   lapply(gam.details, function(f) f(gamNDOC))
-  gamN.null <- hgam_null(excr.sp$massnorm.N.excr.sp)
+  gamN.null <- hgam_null(excr$massnorm.N.excr)
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
   summary(gamN.lake)
   AIC(gamNDOC)
@@ -137,17 +150,13 @@
   
   # ...N:P excretion ----
   # DOC
-  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, 5)
+  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, 6)
   lapply(gam.details, function(f) f(gamNPDOC))
   gamNP.null <- hgam_null_log(excr$massnorm.NP.excr)
   gamNP.lake <- hgam_lake_log(excr$massnorm.NP.excr)
   AIC(gamNPDOC)
   
-  # Individual dry mass
-  gamBMDOC <- hgam(excr.sp$Mass.sp, 5)
-  lapply(gam.details, function(f) f(gamBMDOC))
-  
-  # make AIC table
+  # make AIC table ----
   AIC.tbl <- AIC(gamNDOC, gamN.lake, gamN.null,  
                  gamPDOC, gamP.lake, gamP.null,
                  gamNPDOC, gamNP.lake, gamNP.null)
@@ -162,7 +171,7 @@
     filter(!is.na(massnorm.C.excr),
                               massnorm.C.excr < 32.56) 
   aov_DOCM <- function(x) {
-    m <- lm(log10(x)~ DOC.level, data = excr.aov)
+    m <- lm(log10(x) ~ DOC.level, data = excr.aov)
     print(summary(m))
     return(m)
   }
@@ -212,7 +221,8 @@
   print(tukey.results, n = 33)
   
   # t-test ----
-  excr.ttest <- excr.var 
+  excr.ttest <- excr.var %>% mutate(across(where(is.numeric),
+                                           ~ if_else(. < 0, NA, .)))
   t_test_results <- list()
   
   # Loop through selected columns
@@ -306,7 +316,7 @@
   posthoc.l
   perma.m <- perma(excr.nmds.mm, excr.nmds.m)
   perma.h <- perma(excr.nmds.hm, excr.nmds.h)
-  perma.all <- adonis2(excr.nmds.allm ~ Trophic.position2*Site.name, excr.nmds, 
+  perma.all <- adonis2(excr.nmds.allm ~ Source, excr.nmds, 
                        methods = 'bray')
   perma.all
   posthoc.all <- pairwise.adonis2(excr.nmds.allm ~ Source, excr.nmds)
@@ -323,7 +333,7 @@
   disper.l <- disper(excr.nmds.lm, excr.nmds.l$Trophic.position2)
   disper.m <- disper(excr.nmds.mm, excr.nmds.m$Trophic.position2)
   disper.h <- disper(excr.nmds.hm, excr.nmds.h$Trophic.position2)
-  disper.all <- disper(excr.nmds.allm, excr.nmds$Trophic.position2)
+  disper.all <- disper(excr.nmds.allm, excr.nmds$Source)
 
   # export test result tables ----
   write_csv(tukey.results, "output/DOMexcr_tukey_results.csv")

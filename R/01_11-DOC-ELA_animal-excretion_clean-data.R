@@ -25,6 +25,8 @@
   
   # Clean data, rename and add variables ----
   unique(er$Comments)
+  names(er)[sapply(er, function(x) any(x < 0))] # check columns with negative values
+  
   excr <- er %>%
     rename(
       Mass = Dry.mass,
@@ -43,7 +45,8 @@
       Trophic.position2 = factor(
         ifelse(Species.code == 'YP' | Species.code == 'WS', 'C', 'O')
       ),
-      Site.name = factor(Site.name)
+      Site.name = factor(Site.name),
+      #across(where(is.numeric), ~ ifelse(. < 0, 0, .))
       ) %>% 
     # filter out control samples + fish that could have had a contaminated water
     filter(
@@ -57,7 +60,6 @@
                                        ifelse(Site.name == 'L222', 'high', NA)))),
       DOC.level = fct_relevel(DOC.level, c('low', 'med', 'high'))
     )
-
   
   # ...calculate b coeff of variation for all excretion rates + all species ----
   # to normalize excretion rates
@@ -152,7 +154,7 @@
   # add newly created columns to excr dataset
   excr <- left_join(excr, excr.var)
   excr <- excr %>% mutate(
-    massnorm.N.excr_corr = massnorm.N.excr/Temp^0.0404
+    log10.massnorm.NP.excr = log10(massnorm.NP.excr)
     )
   
   ####################### Create datasets for data analysis ###################
@@ -257,9 +259,11 @@
       values_drop_na = TRUE
     ) %>% 
     dplyr::mutate(
+      across(where(is.numeric),
+             ~ if_else(. < 0, NA, .)),
       type = if_else(type == 'SUVA', 'SUVA254',
                      if_else(type == 'BA', 'βα', type)),
-      type = reorder(type, massnorm.excr, median)
+      type = reorder(type, massnorm.excr, median, na.rm = TRUE)
     )
   
   # ..prepare PCA dataset ----
@@ -295,10 +299,14 @@
   # ..prepare NMDS dataset ----
   excr.amb <- excr.pca %>% 
     rename(ID = Site.name) %>% 
-    filter(ID %in% c('L222', 'L224', 'L239')) %>% 
-    dplyr::mutate(Site.name = c('L222', 'L224', 'L239'),
-                  Source = c('AmL222', 'AmL224', 'AmL239'),
-                  Trophic.position2 = c('AmL222', 'AmL224', 'AmL239')) %>% 
+    # filter(ID %in% c('L222', 'L224', 'L239')) %>% 
+    dplyr::mutate(Site.name = ID,
+                  Source = 'Am',
+                  # Source = c('AmL114', 'AmL222', 'AmL224', 'AmL239', 'AmL373', 
+                  #            'AmL375', 'AmL377', 'AmL378', 'AmL442', 'AmL470', 'AmL626'),
+                  Trophic.position2 = c('AmL114', 'AmL222', 'AmL224', 'AmL239', 'AmL373', 
+                                        'AmL375', 'AmL377', 'AmL378', 'AmL442', 'AmL470', 
+                                        'AmL626')) %>% 
     rename_DOM() %>% 
     select(
       -c(Watershed.area:C_microbialper),
@@ -327,7 +335,7 @@
   
   # ..simulate fish volumetric excretion - NOT used for current ms analysis ----
   
-  # summarise PARAFAC excretion for the three lakes have data
+  # summarise PARAFAC excretion for the three lakes that have data
   excr.PARAFAC <- excr.nmds %>% 
     filter(!Source %in% c('AmL222', 'AmL224', 'AmL239')) %>% 
     group_by(Site.name) %>% 
@@ -394,9 +402,9 @@
   
   # pivot table
   excr.vol.lg <- excr.vol %>% 
-    select(Site.name, DOC.level, lnRR.C:lnRR.C7) %>% 
+    select(Site.name, DOC.level, turnover.C.time_yr:turnover.C7.time_yr) %>% 
     pivot_longer(
-      lnRR.C:lnRR.C7,
+      turnover.C.time_yr:turnover.C7.time_yr,
       names_to = 'variable',
       values_drop_na = TRUE
     ) 

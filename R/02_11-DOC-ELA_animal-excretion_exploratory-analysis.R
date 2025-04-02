@@ -20,8 +20,8 @@
   
   # Look at N/P excretion vs. mass ----
   #..Fathead minnows only  ----
-  because coeffs are too high for N excr (>1) + too low for P excr (<0.3)
-  N excretion
+  # because coeffs are too high for N excr (>1) + too low for P excr (<0.3)
+  # N excretion
   ggplot(excr %>%  filter(Species.code == 'FM',
                           Log10.N.excretion.rate > 0.5),
          aes(x = Log10.mass, y = Log10.N.excretion.rate)) +
@@ -205,7 +205,7 @@
   
   # normality check
   # Build the linear model
-  model  <- lm(log10(massnorm.C.excr) ~ DOC.level, data = excr.aov)
+  model  <- lm(massnorm.SUVA.excr ~ DOC.level, data = excr.aov)
   # Create a QQ plot of residuals
   ggqqplot(residuals(model))
   
@@ -331,6 +331,20 @@
     geom_smooth() +
     theme_classic()
   
+  # how do species differ in N and P excretion? (using assumption that:
+  # relationship is linear + species occur across DOC gradient, but both not true)
+  ggplot(excr, aes(x = Species.code, y = log10(massnorm.N.excr))) +
+    geom_boxplot()
+  
+  aovN.sp <- lm(log10(massnorm.N.excr) ~ Species.code * AmDOC, excr)
+  Anova(aovN.sp)
+  tukey_hsd(aovN.sp)
+  
+  ggplot(excr, aes(x = Species.code, y = log10(massnorm.P.excr))) +
+    geom_boxplot()
+  aovP.sp <- lm(log10(massnorm.P.excr) ~ Species.code * AmDOC, excr)
+  Anova(aovP.sp)
+  tukey_hsd(aovP.sp)
   
   
 
