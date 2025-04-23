@@ -301,9 +301,9 @@
     rename(ID = Site.name) %>% 
     # filter(ID %in% c('L222', 'L224', 'L239')) %>% 
     dplyr::mutate(Site.name = ID,
-                  Source = 'Am',
-                  # Source = c('AmL114', 'AmL222', 'AmL224', 'AmL239', 'AmL373', 
-                  #            'AmL375', 'AmL377', 'AmL378', 'AmL442', 'AmL470', 'AmL626'),
+                  #Source = 'Am',
+                  Source = c('AmL114', 'AmL222', 'AmL224', 'AmL239', 'AmL373',
+                             'AmL375', 'AmL377', 'AmL378', 'AmL442', 'AmL470', 'AmL626'),
                   Trophic.position2 = c('AmL114', 'AmL222', 'AmL224', 'AmL239', 'AmL373', 
                                         'AmL375', 'AmL377', 'AmL378', 'AmL442', 'AmL470', 
                                         'AmL626')) %>% 

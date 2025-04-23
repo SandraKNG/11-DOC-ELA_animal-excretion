@@ -17,31 +17,12 @@
   pred_df <- excr %>% tidyr::expand(Trophic.position2, 
                                      AmDOC = c(seq(min(AmDOC), max(AmDOC),
                                                    length = 100),
-                                               rep(median(AmDOC), 100)),
-                                     Zmean = c(seq(min(Zmean), max(Zmean),
-                                                   length = 100),
-                                               rep(median(Zmean), 100)))
+                                               rep(median(AmDOC), 100)))
   
   # Prediction models ----
-  gamNDOC.pred <- fitted_values(gamNDOC, pred_df, 
-                                exclude = c("s(Zmean):Trophic.position2C",
-                                            "s(Zmean):Trophic.position2O"))
-  gamPDOC.pred <- fitted_values(gamPDOC, pred_df,
-                                exclude = c("s(Zmean):Trophic.position2C",
-                                            "s(Zmean):Trophic.position2O"))
-  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_df, 
-                                 exclude = c("s(Zmean):Trophic.position2C",
-                                             "s(Zmean):Trophic.position2O"))
-  
-  gamNZmean.pred <- fitted_values(gamNDOC, pred_df,
-                                  exclude = c("s(AmDOC):Trophic.position2C",
-                                              "s(AmDOC):Trophic.position2O"))
-  gamPZmean.pred <- fitted_values(gamPDOC, pred_df,
-                                  exclude = c("s(AmDOC):Trophic.position2C",
-                                              "s(AmDOC):Trophic.position2O"))
-  gamNPZmean.pred <- fitted_values(gamNPDOC, pred_DOC_df,
-                                   exclude = c("s(AmDOC):Trophic.position2C",
-                                               "s(AmDOC):Trophic.position2O"))
+  gamNDOC.pred <- fitted_values(gamNDOC, pred_df)
+  gamPDOC.pred <- fitted_values(gamPDOC, pred_df)
+  gamNPDOC.pred <- fitted_values(gamNPDOC, pred_df)
   
   # Plot ----
   # ..set up plotting parameters ----
@@ -131,6 +112,10 @@
                          name = 'Species',
                          labels = Species.labels)
   }
+  
+  plot_sp_bp <- function(x, df){
+    
+  }
    
   
   # Figure 1 ----
@@ -143,15 +128,15 @@
   NexcrDOC.p
   
   # P excretion
-  PexcrDOC.p <- plot_gam(gamPDOC.pred, 'AmDOC', #%>% filter(Trophic.position2 == 'C'), 
+  PexcrDOC.p <- plot_gam(gamPDOC.pred %>% filter(Trophic.position2 == 'C'), 'AmDOC',
                          excr$massnorm.P.excr) +
     labs(x = '',
          y = expression(atop('Mass-normalized',
-                             paste(P~excretion~(μg~P~g^-1~h^-1))))) #+
-    # geom_hline(data = excrtp.ss %>% filter(Variable == 'massnorm.P.excr' &
-    #                                        .group == 'Trophic.position2=O'),
-    #            aes(yintercept = Mean), linetype = 'dashed', 
-    #            linewidth = line.size, colour = "#43b284")
+                             paste(P~excretion~(μg~P~g^-1~h^-1))))) +
+    geom_hline(data = excrtp.ss %>% filter(Variable == 'massnorm.P.excr' &
+                                           .group == 'Trophic.position2=O'),
+               aes(yintercept = Mean), linetype = 'dashed',
+               linewidth = line.size, colour = "#43b284")
   PexcrDOC.p
   
   # N:P excretion vs DOC
@@ -190,17 +175,17 @@
   NPexcrZmean.p
   
   # combine plots ----
-  ggarrange(NexcrDOC.p, NexcrZmean.p, 
-            PexcrDOC.p, PexcrZmean.p,
-            NPexcrDOC.p, NPexcrZmean.p,
+  ggarrange(NexcrDOC.p, #NexcrZmean.p, 
+            PexcrDOC.p, #PexcrZmean.p,
+            NPexcrDOC.p, #NPexcrZmean.p,
             label.x = 0.2, label.y = 1,
-            nrow = 3, ncol = 2, align = 'hv',
+            nrow = 3, ncol = 1, align = 'hv',
             common.legend = T,
-            labels = c('(a)', '(b)', '(c)', '(d)', '(e)', '(f)'),
+            labels = c('(a)', '(b)', '(c)'),#, '(d)', '(e)', '(f)'),
             font.label = list(size = 10))
   
-  ggsave('tables_figures/final_tables_figures/Fig1_2.tiff', 
-         width = 20, height = 16.2,
+  ggsave('tables_figures/final_tables_figures/Fig1.tiff', 
+         width = 10, height = 16.2,
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure 2 ----
@@ -327,20 +312,25 @@
          width = 10, height = 18, 
          units = 'cm', dpi = 600)
   
+  
   # Figure S2 ----
-  pca.all.p <- fviz_pca_biplot(pca.all,
+  # plot PCA
+  pca.DOM.p <- fviz_pca_biplot(pca.DOM,
                                repel = T,
                                label = 'var',
+                               col.ind = excr.pca$AmDOC,
                                title = '',
                                ggtheme = theme_bw()) +
     xlim(-5,5) +
     ylim(-3,3) +
-    labs(x = 'PC1 (58.4%)',
-         y = 'PC2 (18.7%)')
-  pca.all.p
+    labs(x = 'PC1 (75.2%)',
+         y = 'PC2 (13%)') +
+    scale_colour_gradient2(name = expression(atop(DOC,
+                                                  paste((mg~C~L^-1)))), high = "#3c0d03")
+  pca.DOM.p
   
   ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
-         width = 11, height = 11, 
+         width = 12, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
   
   # Figure S3 ----
@@ -430,24 +420,23 @@
          units = 'cm', dpi = 600, compression = 'lzw', bg = 'white')
   
   # Figure S4 ----
-  # plot PCA
-  pca.DOM.p <- fviz_pca_biplot(pca.DOM,
+  pca.all.p <- fviz_pca_biplot(pca.all,
                                repel = T,
                                label = 'var',
-                               col.ind = excr.pca$AmDOC,
                                title = '',
                                ggtheme = theme_bw()) +
     xlim(-5,5) +
     ylim(-3,3) +
-    labs(x = 'PC1 (75.2%)',
-         y = 'PC2 (13%)') +
-    scale_colour_gradient2(name = expression(atop(DOC,
-                                                  paste((mg~C~L^-1)))), high = "#3c0d03")
-  pca.DOM.p
+    labs(x = 'PC1 (58.4%)',
+         y = 'PC2 (18.7%)')
+  pca.all.p
   
-  ggsave('tables_figures/final_tables_figures/FigS4.tiff', 
-         width = 12, height = 11, 
+  pca.result
+  
+  ggsave('tables_figures/final_tables_figures/FigS2.tiff', 
+         width = 11, height = 11, 
          units = 'cm', dpi = 600, compression = 'lzw')
+  
   
   # Figure S6 ----
   # Individual excretion rates across streams by species
@@ -469,6 +458,14 @@
                              paste('N:P excretion (molar)')))) 
   NPexcrsp.p 
   
+  # boxplots of species variability
+  ggplot(excr, aes(x = Species.code, y = massnorm.N.excr)) +
+    geom_point(aes(colour = Species.code)) +
+    geom_boxplot() +
+    scale_color_brewer(palette = 'Dark2',
+                       name = 'Species',
+                       labels = Species.labels)
+  
   # combine plots ----
   ggarrange(Nexcrsp.p, Pexcrsp.p, NPexcrsp.p,
             labels = c("(a)", "(b)", "(c)"),
@@ -481,16 +478,20 @@
   
   # Figure S7 ----
   # NMDS of all ambient DOC + fish excr
-  nmds.all.p <- plot_nmds(nmds.all.scores) +
-    scale_shape_manual(values = c(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16)) +
-    scale_color_manual(values = c("grey", "#3c0d03", "#f5c34d", "#8d1c06", 
+  nmds.all.p <- ggplot(nmds.all.scores, aes(x = NMDS1, y = NMDS2, 
+                                            fill = Source, shape = Source)) +
+    geom_point(aes(colour = Source), 
+               size = point.size) +
+    theme_classic(base_size = 10) +
+    scale_shape_manual(values = c(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 16)) +
+    scale_color_manual(values = c("grey", "#3c0d03", "#f5c34d", "#8d1c06",
                                   "grey", "grey", "grey",
-                                  "grey", "grey", "grey", "grey", 
-                                  "#dd5129", "#43b284")) +
-    scale_fill_manual(values = c("grey", "#3c0d03", "#f5c34d", "#8d1c06", 
+                                  "grey", "grey", "grey", "grey",
+                                  'darkgoldenrod', 'salmon', 'bisque3', 'olivedrab')) +
+    scale_fill_manual(values = c("grey", "#3c0d03", "#f5c34d", "#8d1c06",
                                  "grey", "grey", "grey",
-                                 "grey", "grey", "grey", "grey", 
-                                 "#dd5129", "#43b284")) +
+                                 "grey", "grey", "grey", "grey",
+                                 'darkgoldenrod', 'salmon', 'bisque3', 'olivedrab')) +
     theme(legend.position = "none") +
     annotate("text", x = 1, y = .7,
              label = 'low DOC', colour = "#f5c34d", size = text.size) +
@@ -498,13 +499,17 @@
              label = 'high DOC', colour = "#3c0d03", size = text.size) +
     annotate("text", x = 1.6, y = 0,
              label = 'medium DOC', colour = "#8d1c06", size = text.size) +
-    annotate("text", x = 1, y = -1,
-             label = 'omnivore', colour = "#43b284", size = text.size) +
-    annotate("text", x = -1.5, y = -1,
-             label = 'carnivore', colour = "#dd5129", size = text.size) 
+  annotate("text", x = -.5, y = .9,
+           label = 'fathead minnow', colour = 'darkgoldenrod', size = text.size) +
+    annotate("text", x = .5, y = -.75,
+             label = 'northern pearl dace', colour = 'salmon', size = text.size) +
+    annotate("text", x = .5, y = 0.2,
+             label = 'white sucker', colour = 'bisque3', size = text.size) +
+      annotate("text", x = -1.5, y = -1,
+             label = 'yellow perch', colour = 'olivedrab', size = text.size) 
   nmds.all.p
   
-  ggsave('tables_figures/final_tables_figures/FigS7.tiff', 
+  ggsave('tables_figures/final_tables_figures/FigS7_sp.tiff', 
          width = 12, height = 8, 
          units = 'cm', dpi = 600, compression = 'lzw')
   

@@ -16,6 +16,8 @@
   library(rstatix) # for many pipe-friendly stat tools
   library(writexl) # to export excel file
   library(ggcorrplot)
+  library(PCAtest)
+  #library(MASS)
   
   # PCA ----
   # PCA to map all lake parameters except for DOM composition
@@ -31,7 +33,8 @@
   # check loadings
   pca.all$loadings
   #pca.mx <- round(cor(excr.pca.all), 1)
-  #PCAtest(pca.all, 100, 100, 0.05, varcorr=FALSE, counter=FALSE, plot=TRUE)
+  pca.result <- PCAtest(excr.pca.all[, 2:11], 100, 100, 0.05, varcorr = FALSE, 
+                    counter = FALSE, plot = TRUE)
   # Extract PC1 scores
   pca.PC1 <- pca.all$scores[,1]
   # add it to current datasets
@@ -63,16 +66,10 @@
   
   # correlation matrix
   excr.cor <- excr.pca %>% select(-c(AmC1:AmC7))
-  
   cor.mx <- round(cor(excr.cor[2:26], use = "pairwise.complete.obs"), 1)
-  
   # Computing correlation matrix with p-values 
   corrp.mat <- cor_pmat(excr.cor[2:26], use = "pairwise.complete.obs") 
   
-  # corrplot(cor.mx)
-  # Visualizing upper and lower triangle layouts 
-  ggcorrplot(cor.mx, hc.order = TRUE,  type = "upper", 
-             outline.color = "white", p.mat = corrp.mat)
   
   # GAM ----
   # without trophic position and with population averages
@@ -80,7 +77,6 @@
   
   hgam <- function(y, k) {
     mod <- gam(y ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
-                 s(Zmean, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
                  s(Trophic.position2, bs = 're'),
                method = 'REML', data = excr,
                family = tw())
@@ -89,7 +85,6 @@
 #
   hgam_log <- function(y, k) {
     mod <- gam(log10(y) ~ s(AmDOC, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
-                 s(Zmean, by = Trophic.position2, k = k, m = 2, bs = 'tp') +
                  s(Trophic.position2, bs = 're'), 
                method = 'REML', data = excr)
     return(mod)
@@ -131,8 +126,7 @@
   
   # ...N excretion ----
   # DOC
-  gamNDOC <- hgam(excr$massnorm.N.excr, 5)
-  concurvity(gamNDOC)
+  gamNDOC <- hgam(excr$massnorm.N.excr, 6)
   lapply(gam.details, function(f) f(gamNDOC))
   gamN.null <- hgam_null(excr$massnorm.N.excr)
   gamN.lake <- hgam_lake(excr$massnorm.N.excr)
@@ -150,7 +144,7 @@
   
   # ...N:P excretion ----
   # DOC
-  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, 6)
+  gamNPDOC <- hgam_log(excr$massnorm.NP.excr, 5)
   lapply(gam.details, function(f) f(gamNPDOC))
   gamNP.null <- hgam_null_log(excr$massnorm.NP.excr)
   gamNP.lake <- hgam_lake_log(excr$massnorm.NP.excr)
@@ -336,6 +330,7 @@
   disper.all <- disper(excr.nmds.allm, excr.nmds$Source)
 
   # export test result tables ----
+  write_csv(pca.result, "output/PCAtest_results.csv")
   write_csv(tukey.results, "output/DOMexcr_tukey_results.csv")
   write_csv(t.test.results, "output/DOMexcr_ttest_results.csv")
   

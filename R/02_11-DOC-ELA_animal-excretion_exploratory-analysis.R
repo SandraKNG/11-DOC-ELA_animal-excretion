@@ -336,15 +336,16 @@
   ggplot(excr, aes(x = Species.code, y = log10(massnorm.N.excr))) +
     geom_boxplot()
   
-  aovN.sp <- lm(log10(massnorm.N.excr) ~ Species.code * AmDOC, excr)
+  aovN.sp <- lm(log10(massnorm.N.excr) ~ Species.code, excr)
   Anova(aovN.sp)
-  tukey_hsd(aovN.sp)
+  t <- tukey_hsd(aovN.sp)
   
   ggplot(excr, aes(x = Species.code, y = log10(massnorm.P.excr))) +
     geom_boxplot()
-  aovP.sp <- lm(log10(massnorm.P.excr) ~ Species.code * AmDOC, excr)
+  aovP.sp <- lm(log10(massnorm.P.excr) ~ Species.code, excr)
   Anova(aovP.sp)
   tukey_hsd(aovP.sp)
+  
   
   
 
