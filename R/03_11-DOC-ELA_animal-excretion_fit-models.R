@@ -17,7 +17,6 @@
   library(writexl) # to export excel file
   library(ggcorrplot)
   library(PCAtest)
-  #library(MASS)
   
   # PCA ----
   # PCA to map all lake parameters except for DOM composition
@@ -25,8 +24,7 @@
     select(c(Site.name:AmTDN, Area:Part.P), 
            -c(pH, Zmax, Thermo.depth, Conductivity)) %>% 
     rename(DOC = AmDOC,
-           TDP = AmTDP) #%>% 
-    # mutate(Thermo.depth = replace_na(Thermo.depth, 1.70))
+           TDP = AmTDP) 
   # do PCA
   pca.all <- princomp(excr.pca.all[, 2:11], cor = TRUE, scores = TRUE)
   biplot(pca.all)
@@ -163,7 +161,10 @@
   # ANOVA ----
   excr.aov <- excr %>%
     filter(!is.na(massnorm.C.excr),
-                              massnorm.C.excr < 32.56) 
+                              massnorm.C.excr < 32.56) %>% 
+    mutate(across(where(is.numeric),
+           ~ if_else(. < 0, NA, .)))
+  
   aov_DOCM <- function(x) {
     m <- lm(log10(x) ~ DOC.level, data = excr.aov)
     print(summary(m))
@@ -172,17 +173,14 @@
   
   # DOC tests
   aovC <- aov_DOCM(excr.aov$massnorm.C.excr)
-  summary(aovC)
   aovC.posthoc <- tukey_hsd(aovC) 
   aovC.posthoc
   
   aovCN <- aov_DOCM(excr.aov$massnorm.CN.excr)
-  summary(aovCN)
   aovCN.posthoc <- tukey_hsd(aovCN) 
   aovCN.posthoc
   
   aovCP <- aov_DOCM(excr.aov$massnorm.CP.excr)
-  summary(aovCP)
   
   # DOM tests
   # Get column indices between "massnorm.SUVA.excr" and "massnorm.C7.excr"
@@ -211,12 +209,12 @@
   tukey.results <- bind_rows(tukey_results, .id = "response")
   tukey.results <- tukey.results %>% 
     arrange(p.adj, group1) 
+  
     
   print(tukey.results, n = 33)
   
   # t-test ----
-  excr.ttest <- excr.var %>% mutate(across(where(is.numeric),
-                                           ~ if_else(. < 0, NA, .)))
+  excr.ttest <- excr.var 
   t_test_results <- list()
   
   # Loop through selected columns

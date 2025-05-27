@@ -30,11 +30,10 @@
   Species.labels <- c('fathead minnow', 'northern pearl dace', 
                       'white sucker', 'yellow perch')
   DOC.labels <- c('low', 'medium', 'high')
-  DOM.labels <- c('C3 (terrestrial \n humic-like)', 'C1 (ubiquitous \n humic-like)', 
-                  'HIX (humic)', 'C4 (soil \n fulvic-like)', 'SR (molecular size)', 
-                  'β:α (freshness)', 'C7 (protein-like)', 'C5 (microbial \n humic-like)',
-                  'C2 (terrestrial \n humic-like)', expression(SUVA[254]~(aromaticity)), 
-                  'FI (source)')
+  DOM.labels <- c('C3 (terrestrial \n humic-like)', 'SR (molecular size)','β:α (freshness)',
+                  'HIX (humic)', 'C1 (ubiquitous \n humic-like)','C4 (soil \n fulvic-like)',
+                  'C7 (protein-like)', 'C5 (microbial \n humic-like)', 'FI (source)',
+                  expression(SUVA[254]~(aromaticity)),'C2 (terrestrial \n humic-like)')
   point.size = 1.5
   point.size2 = 1
   point.alpha = .4
@@ -175,13 +174,13 @@
   NPexcrZmean.p
   
   # combine plots ----
-  ggarrange(NexcrDOC.p, #NexcrZmean.p, 
-            PexcrDOC.p, #PexcrZmean.p,
-            NPexcrDOC.p, #NPexcrZmean.p,
+  ggarrange(NexcrDOC.p, 
+            PexcrDOC.p,
+            NPexcrDOC.p,
             label.x = 0.2, label.y = 1,
             nrow = 3, ncol = 1, align = 'hv',
             common.legend = T,
-            labels = c('(a)', '(b)', '(c)'),#, '(d)', '(e)', '(f)'),
+            labels = c('(a)', '(b)', '(c)'),
             font.label = list(size = 10))
   
   ggsave('tables_figures/final_tables_figures/Fig1.tiff', 
@@ -458,14 +457,6 @@
                              paste('N:P excretion (molar)')))) 
   NPexcrsp.p 
   
-  # boxplots of species variability
-  ggplot(excr, aes(x = Species.code, y = massnorm.N.excr)) +
-    geom_point(aes(colour = Species.code)) +
-    geom_boxplot() +
-    scale_color_brewer(palette = 'Dark2',
-                       name = 'Species',
-                       labels = Species.labels)
-  
   # combine plots ----
   ggarrange(Nexcrsp.p, Pexcrsp.p, NPexcrsp.p,
             labels = c("(a)", "(b)", "(c)"),
@@ -517,7 +508,8 @@
   write_csv(excr, "output/excr_final.csv")
   write_csv(excr.vol, "output/excr_vol_surf_final2.csv")
   write_csv(excr.ss, "output/excr_summary.csv")
-  write_csv(excrtp.ss, "output/excr_summary_site_tp.csv")
+  write_csv(excrtp.ss, "output/excr_summary_tp.csv")
+  write_csv(excrsp.ss, "output/excr_summary_sp.csv")
   write_csv(excr.DOM.ss, "output/DOMexcr_summary.csv")
   write_csv(excr.pca, "output/AmDOM_summary.csv")
   write_csv(fish.biomass, "output/fish_biomass.csv")

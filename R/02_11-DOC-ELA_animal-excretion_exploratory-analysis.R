@@ -332,13 +332,14 @@
     theme_classic()
   
   # how do species differ in N and P excretion? (using assumption that:
-  # relationship is linear + species occur across DOC gradient, but both not true)
-  ggplot(excr, aes(x = Species.code, y = log10(massnorm.N.excr))) +
+  # relationship is linear + species occur across DOC gradient, but both not true) ----
+  ggplot(excr, aes(x = Species.code, y = massnorm.N.excr)) +
     geom_boxplot()
   
   aovN.sp <- lm(log10(massnorm.N.excr) ~ Species.code, excr)
   Anova(aovN.sp)
   t <- tukey_hsd(aovN.sp)
+  t
   
   ggplot(excr, aes(x = Species.code, y = log10(massnorm.P.excr))) +
     geom_boxplot()

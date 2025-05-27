@@ -67,11 +67,11 @@
   # so that remove specific fish that showed abnormal DOM residuals
   # only for DOM variables
   excr.NPC.var <- excr %>% 
-    select(ID, Site.name, Trophic.position2,
+    select(ID, Site.name, Species.code, Trophic.position2,
            'N.excretion.rate', 'P.excretion.rate', 'C.excretion.rate', Mass)
   # filter out fish species that showed very bad DOM residuals
   excr.DOM.var <- excr %>% 
-    select(ID, Site.name, Trophic.position2, ends_with('excretion.rate'), Mass, 
+    select(ID, Site.name, Species.code, Trophic.position2, ends_with('excretion.rate'), Mass, 
            -starts_with(c('N.e', 'P.e', 'C.e'))) %>%
     dplyr::filter(
       !is.na(SUVA.excretion.rate)
@@ -86,12 +86,12 @@
     print(plot)
   }
   for (x in colnames(excr.NPC.var)) {
-    if (!x %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {
+    if (!x %in% c("ID", "Site.name", "Species.code", "Mass", "Trophic.position2")) {
     coeff_check(x, excr.NPC.var)
     }
   }
   for (x in colnames(excr.DOM.var)) {
-    if (!x %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {
+    if (!x %in% c("ID", "Site.name", "Species.code", "Mass", "Trophic.position2")) {
       coeff_check(x, excr.DOM.var)
     }
   }
@@ -105,7 +105,7 @@
   
   for (col in colnames(excr.var)) {
     # Exclude the ID + Mass columns
-    if (!col %in% c("ID", "Site.name", "Mass", "Trophic.position2")) {  
+    if (!col %in% c("ID", "Site.name", "Species.code", "Mass", "Trophic.position2")) {  
       
       subdf <- excr.var %>% 
         filter(!is.na(.data[[col]]), .data[[col]] > 0)  # Use .data to refer to column
@@ -244,7 +244,7 @@
   
   # ..pivot dataset for DOM excretion only ----
   excr.DOM <- excr.var %>% 
-    select(ID, Site.name, Trophic.position2, massnorm.SUVA.excr:massnorm.C7.excr) %>% 
+    select(ID, Site.name, Species.code, Trophic.position2, massnorm.SUVA.excr:massnorm.C7.excr) %>% 
     mutate(
       DOC.level = factor(ifelse(Site.name == 'L224', 'low', 
                                 ifelse(Site.name == 'L239', 'med',
@@ -259,8 +259,8 @@
       values_drop_na = TRUE
     ) %>% 
     dplyr::mutate(
-      across(where(is.numeric),
-             ~ if_else(. < 0, NA, .)),
+      # across(where(is.numeric),
+      #        ~ if_else(. < 0, NA, .)),
       type = if_else(type == 'SUVA', 'SUVA254',
                      if_else(type == 'BA', 'βα', type)),
       type = reorder(type, massnorm.excr, median, na.rm = TRUE)
@@ -411,6 +411,9 @@
     
   
   # ..summary statistics ----
+  excr <- excr %>%
+    droplevels()
+  
   excr.ss <- excr %>% 
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr', 'P.excretion.rate',
              'massnorm.C.excr', 'massnorm.CN.excr', 'massnorm.CP.excr', 'Mass')) %>% 
@@ -423,13 +426,18 @@
              'Mass')) %>% 
     describe_distribution()
   
+  
   excrsp.ss <- excr %>% 
     group_by(Species.code) %>%
     select(c('massnorm.N.excr', 'massnorm.P.excr', 'massnorm.NP.excr',
              'Mass')) %>% 
     describe_distribution()
   
-  excr.DOM.ss <- excr.DOM.var %>% 
+  excr.DOM.w <- excr.DOM %>% 
+    pivot_wider(names_from = type,
+                values_from = massnorm.excr)
+  
+  excr.DOM.ss <- excr.DOM.w %>% 
     select(-c(ID, Site.name)) %>% 
     describe_distribution()
   
