@@ -24,13 +24,13 @@
     select(c(Site.name:AmTDN, Area:Part.P), 
            -c(pH, Zmax, Thermo.depth, Conductivity)) %>% 
     rename(DOC = AmDOC,
-           TDP = AmTDP) 
+           TDP = AmTDP,
+           TDN = AmTDN) 
   # do PCA
   pca.all <- princomp(excr.pca.all[, 2:11], cor = TRUE, scores = TRUE)
   biplot(pca.all)
   # check loadings
   pca.all$loadings
-  #pca.mx <- round(cor(excr.pca.all), 1)
   pca.result <- PCAtest(excr.pca.all[, 2:11], 100, 100, 0.05, varcorr = FALSE, 
                     counter = FALSE, plot = TRUE)
   # Extract PC1 scores
